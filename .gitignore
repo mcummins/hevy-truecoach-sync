@@ -1,0 +1,26 @@
+# --- Secrets ---
+.env
+
+# --- Per-user runtime state (not source) ---
+.sync_cache.json
+hevy_exercise_history.json
+tc_mapping_overrides.json
+pending_approvals.json
+
+# --- One-off preview / report outputs ---
+reverse_sync_preview.json
+workout_sync_report_*.html
+.run_puts.js
+
+# --- Python build artifacts ---
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+pytest-cache-files-*/
+
+# --- Editor / OS ---
+.DS_Store
+.idea/
+.vscode/
+.claude/

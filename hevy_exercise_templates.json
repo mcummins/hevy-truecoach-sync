@@ -1,0 +1,3650 @@
+[
+  {
+    "id": "3BC06AD3",
+    "title": "21s Bicep Curl",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "deaed117-349e-41a3-9982-6730ceaee29f",
+    "title": "3 Way Delt Raise",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B4F2FF72",
+    "title": "Ab Scissors",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "99D5F10E",
+    "title": "Ab Wheel",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "db9ea442-0d07-4120-8885-57dd0906f501",
+    "title": "Ab Wheel Rollout",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "5E0DDACE",
+    "title": "Aerobics",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "43573BB8",
+    "title": "Air Bike",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "A69FF221",
+    "title": "Arnold Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D4A2FE7E",
+    "title": "Around The World",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5BFF35BA",
+    "title": "Assisted Pistol Squats",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "4F5866F8",
+    "title": "Back Extension (Hyperextension)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lower_back",
+    "type": "reps_only"
+  },
+  {
+    "id": "A05C064D",
+    "title": "Back Extension (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lower_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "091737FA",
+    "title": "Back Extension (Weighted Hyperextension)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lower_back",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "F51D9080",
+    "title": "Ball Slams",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E8D86EE8",
+    "title": "Band Pullaparts",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "shoulders",
+    "type": "reps_only"
+  },
+  {
+    "id": "084A67CA",
+    "title": "Battle Ropes",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "DDB29047",
+    "title": "Behind the Back Bicep Wrist Curl (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "forearms",
+    "type": "weight_reps"
+  },
+  {
+    "id": "2DBCA395",
+    "title": "Behind the Back Curl (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3D1CDC75",
+    "title": "Belt Squat (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CD6DC8E5",
+    "title": "Bench Dip",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "triceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "79D0BB3A",
+    "title": "Bench Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "99C1F2AD",
+    "title": "Bench Press (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "35B51B87",
+    "title": "Bench Press - Close Grip (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3601968B",
+    "title": "Bench Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0FBF7195",
+    "title": "Bench Press (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E644F828",
+    "title": "Bench Press - Wide Grip (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "EA820646",
+    "title": "Bent Over Row (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "55E6546F",
+    "title": "Bent Over Row (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "23E92538",
+    "title": "Bent Over Row (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A5AC6449",
+    "title": "Bicep Curl (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "ADA8623C",
+    "title": "Bicep Curl (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "37FCC2BB",
+    "title": "Bicep Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "AF328E3D",
+    "title": "Bicep Curl (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0B4C1902",
+    "title": "Bicep Curl (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "biceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "91c1c018-d24e-4be0-bcde-4ccd0192a887",
+    "title": "Biceps Curl (Barbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "27a44949-2a11-45e7-b56f-229b6a992170",
+    "title": "Biceps Curl (Cable)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "b3436bfb-6e12-4a16-9c57-5fd413a8b76e",
+    "title": "Biceps Curl (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A41C7261",
+    "title": "Bicycle Crunch",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "594450D2",
+    "title": "Bicycle Crunch Raised Legs",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "BD0AD077",
+    "title": "Bird Dog",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "A0D8FA1B",
+    "title": "Boxing",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "56092DD1",
+    "title": "Box Jump",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "38FC1AB9",
+    "title": "Box Squat (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B5D3A742",
+    "title": "Bulgarian Split Squat",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "69db2453-0c48-4121-8673-6b5c84c4680d",
+    "title": "Bulgarian Split Squat (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BB792A36",
+    "title": "Burpee",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "86B00DDE",
+    "title": "Burpee Over the Bar",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "9DCE2D64",
+    "title": "Butterfly (Pec Deck)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CC55119B",
+    "title": "Cable Core Palloff Press",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "23A48484",
+    "title": "Cable Crunch",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "651F844C",
+    "title": "Cable Fly Crossovers",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8C331CD8",
+    "title": "Cable Pull Through",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "92D858EA",
+    "title": "Cable Twist (Down to up)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A2D838BD",
+    "title": "Cable Twist (Up to down)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "47B9DF13",
+    "title": "Calf Extension (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "91237BDD",
+    "title": "Calf Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6FCD7755",
+    "title": "Chest Dip",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "E9E4089F",
+    "title": "Chest Dip (Assisted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "bodyweight_assisted"
+  },
+  {
+    "id": "29472BE1",
+    "title": "Chest Dip (Weighted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "DDB7C19F",
+    "title": "Chest Fly (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "12017185",
+    "title": "Chest Fly (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "78683336",
+    "title": "Chest Fly (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "720B0D70",
+    "title": "Chest Fly (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "EAC7D9C5",
+    "title": "Chest Press (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7EB3F7C3",
+    "title": "Chest Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "914F3A96",
+    "title": "Chest Supported Incline Row (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B582299E",
+    "title": "Chest Supported Reverse Fly (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "acaf1459-0975-4779-9860-4a5e0eebf47a",
+    "title": "Chest Supported Row (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F21D5693",
+    "title": "Chest Supported Y Raise (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "29083183",
+    "title": "Chin Up",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "reps_only"
+  },
+  {
+    "id": "D23C609B",
+    "title": "Chin Up (Assisted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "bodyweight_assisted"
+  },
+  {
+    "id": "023943F1",
+    "title": "Chin Up (Weighted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "CC016611",
+    "title": "Clamshell",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "10D76E8F",
+    "title": "Clap Push Ups",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "ABB00838",
+    "title": "Clean",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9E09CEC3",
+    "title": "Clean and Jerk",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D3095577",
+    "title": "Clean and Press",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "652FEA39",
+    "title": "Clean Pull",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E23F1F2B",
+    "title": "Climbing",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "724CDE60",
+    "title": "Concentration Curl",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "32C4D4A2",
+    "title": "Cross Body Hammer Curl",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "DCF3B31B",
+    "title": "Crunch",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "EB43ADD4",
+    "title": "Crunch (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D928C232",
+    "title": "Crunch (Weighted)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "D39EC9EB",
+    "title": "Curtsy Lunge (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D8F7F851",
+    "title": "Cycling",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "D8911FC4",
+    "title": "Dead Bug",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "B9380898",
+    "title": "Dead Hang",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "upper_back",
+    "type": "duration"
+  },
+  {
+    "id": "99507114",
+    "title": "Deadlift (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C6272009",
+    "title": "Deadlift (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5F4E6DD3",
+    "title": "Deadlift (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FA5D0DE1",
+    "title": "Deadlift High Pull",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "20870ED5",
+    "title": "Deadlift (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B923B230",
+    "title": "Deadlift (Trap bar)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "d6bc88e7-1563-47b8-9ba7-1fc96ed53cd3",
+    "title": "Deadlift (Trap Bar)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "DA0F0470",
+    "title": "Decline Bench Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "18487FA7",
+    "title": "Decline Bench Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FAF31231",
+    "title": "Decline Bench Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FFC106CB",
+    "title": "Decline Bench Press (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A351AED7",
+    "title": "Decline Chest Fly (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BC10A922",
+    "title": "Decline Crunch",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "B2398CD1",
+    "title": "Decline Crunch (Weighted)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "C43825EA",
+    "title": "Decline Push Up",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "6575F52D",
+    "title": "Diamond Push Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "triceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "7DA843A3",
+    "title": "Downward Dog",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "D950429E",
+    "title": "Drag Curl",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "AFC29472",
+    "title": "Dragon Flag",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "B7192800",
+    "title": "Dragonfly",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "99fb64bb-3fe2-4395-a01c-1bfd94380e99",
+    "title": "Dumbbell Pullover",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4fcd1481-ec99-4050-8ef5-3fb5da2d46bb",
+    "title": "Dumbbell Row",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "duration"
+  },
+  {
+    "id": "F1E57334",
+    "title": "Dumbbell Row",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F3717B0E",
+    "title": "Dumbbell Snatch",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F72FA239",
+    "title": "Dumbbell Squeeze Press",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BF6ECE89",
+    "title": "Dumbbell Step Up",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A01BE509",
+    "title": "Elbow to Knee",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "3303376C",
+    "title": "Elliptical Trainer",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "01A35BF9",
+    "title": "EZ Bar Biceps Curl",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BE640BA0",
+    "title": "Face Pull",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "50C613D0",
+    "title": "Farmers Walk",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "full_body",
+    "type": "short_distance_weight"
+  },
+  {
+    "id": "867AC3B6",
+    "title": "Feet Up Bench Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "2AF8B552",
+    "title": "Fire Hydrants",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "D53F2886",
+    "title": "Floor Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "756EE329",
+    "title": "Floor Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A57D38D5",
+    "title": "Floor Triceps Dip",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "triceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "2FA77B28",
+    "title": "Flutter Kicks",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "4fb13141-52e3-4fe2-93da-fce11bd81a77",
+    "title": "Fly (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "207DC636",
+    "title": "Frog Jumps",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "F6948F17",
+    "title": "Frog Pumps (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0E608350",
+    "title": "Front Lever Hold",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "duration"
+  },
+  {
+    "id": "30F03BF0",
+    "title": "Front Lever Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "47B036EF",
+    "title": "Front Raise (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BD86EFD5",
+    "title": "Front Raise (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "DBB91A3C",
+    "title": "Front Raise (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8293E554",
+    "title": "Front Raise (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "796E8E2C",
+    "title": "Front Raise (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "shoulders",
+    "type": "reps_only"
+  },
+  {
+    "id": "5046D0A9",
+    "title": "Front Squat",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1283BBA6",
+    "title": "Full Squat",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CDA23948",
+    "title": "Glute Bridge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "68B83EE0",
+    "title": "Glute Ham Raise",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "hamstrings",
+    "type": "reps_only"
+  },
+  {
+    "id": "CBA02382",
+    "title": "Glute Kickback (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "987234AB",
+    "title": "Glute Kickback on Floor",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "3D0C7C75",
+    "title": "Goblet Squat",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4180C405",
+    "title": "Good Morning (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "05487216",
+    "title": "Gorilla Row (Kettlebell)",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "AC5A4C58",
+    "title": "Hack Squat",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1E42FD5F",
+    "title": "Hack Squat (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1D4B3D6B",
+    "title": "Hammer Curl (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "36E8F14E",
+    "title": "Hammer Curl (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7E3BC8B6",
+    "title": "Hammer Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BE3615CF",
+    "title": "Handstand Hold",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "duration"
+  },
+  {
+    "id": "90B04F96",
+    "title": "Handstand Push Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "shoulders",
+    "type": "reps_only"
+  },
+  {
+    "id": "BD4E7E53",
+    "title": "Hang Clean",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "08590920",
+    "title": "Hanging Knee Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "F8356514",
+    "title": "Hanging Leg Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "F4E77594",
+    "title": "Hang Snatch",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "567FB505",
+    "title": "Heel Taps",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "BE89C631",
+    "title": "Hex Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "150E076B",
+    "title": "High Knees",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "C9CCB878",
+    "title": "High Knee Skips",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "023947AB",
+    "title": "HIIT",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "1C34A172",
+    "title": "Hiking",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "F4B4C6EE",
+    "title": "Hip Abduction (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abductors",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8BEBFED6",
+    "title": "Hip Adduction (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "adductors",
+    "type": "weight_reps"
+  },
+  {
+    "id": "92B8C7E1",
+    "title": "Hip Thrust",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "D57C2EC7",
+    "title": "Hip Thrust (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "68CE0B9B",
+    "title": "Hip Thrust (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "291ABA92",
+    "title": "Hip Thrust (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "36368f39-74cf-4fdd-a8a6-9f8828823a19",
+    "title": "Hollow Hold",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "duration"
+  },
+  {
+    "id": "970ADF87",
+    "title": "Hollow Rock",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "duration"
+  },
+  {
+    "id": "cb9db8d8-1c35-4030-9638-a0721952bcac",
+    "title": "How would you rate the coaching service out of 5 stars?",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "reps_only"
+  },
+  {
+    "id": "50DFDFAB",
+    "title": "Incline Bench Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "07B38369",
+    "title": "Incline Bench Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3A6FA3D1",
+    "title": "Incline Bench Press (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D3E2AB55",
+    "title": "Incline Chest Fly (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FBF92739",
+    "title": "Incline Chest Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "bd8a6529-adeb-4740-b3fe-a439d29d9177",
+    "title": "Incline Fly (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "39C99849",
+    "title": "Incline Push Ups",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "425805F4",
+    "title": "Inverted Row",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "reps_only"
+  },
+  {
+    "id": "24706DCD",
+    "title": "Iso-Lateral Chest Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BC3492DA",
+    "title": "Iso-Lateral High Row (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "91FAFBA3",
+    "title": "Iso-Lateral Low Row",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "AA1EB7D8",
+    "title": "Iso-Lateral Row (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "32B0B590",
+    "title": "Jackknife Sit Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "D410F649",
+    "title": "Jack Knife (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "2b959153-d3e7-4cb0-9fb6-f1d4fe7fe4f0",
+    "title": "Jefferson Curl",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "lower_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "cea2475e-4edc-47f5-8614-86e2e45d8e77",
+    "title": "Jefferson Curl (Cable)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "74103F24",
+    "title": "JM Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "991833C2",
+    "title": "Jumping Jack",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "5CC07A1F",
+    "title": "Jumping Lunge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "040BA2E3",
+    "title": "Jump Rope",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "BA3DE542",
+    "title": "Jump Shrug",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "70D4EBBF",
+    "title": "Jump Squat",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "55BA475A",
+    "title": "Kettlebell Around the World",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F99C211D",
+    "title": "Kettlebell Clean",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4E239ED8",
+    "title": "Kettlebell Curl",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A127DA73",
+    "title": "Kettlebell Goblet Squat",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4288G454",
+    "title": "Kettlebell Halo",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9B13BA4B",
+    "title": "Kettlebell High Pull",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6433CD93",
+    "title": "Kettlebell Shoulder Press",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "89304423",
+    "title": "Kettlebell Snatch",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F8A0FCCA",
+    "title": "Kettlebell Swing",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5F8903BF",
+    "title": "Kettlebell Turkish Get Up",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A91838C0",
+    "title": "Kipping Pull Up",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "reps_only"
+  },
+  {
+    "id": "D82EA543",
+    "title": "Kneeling Pulldown (band)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B74A95BB",
+    "title": "Kneeling Push Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "98237BA2",
+    "title": "Knee Raise Parallel Bars",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "923874CA",
+    "title": "Landmine 180",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D7D7FCCE",
+    "title": "Landmine Row",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "983274DD",
+    "title": "Landmine Squat and Press",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "EC02979E",
+    "title": "Lateral Band Walks",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "07EBC4DC",
+    "title": "Lateral Box Jump",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "DC59D143",
+    "title": "Lateral Leg Raises",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "F2A37357",
+    "title": "Lateral Lunge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "DF200976",
+    "title": "Lateral Raise (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BE289E45",
+    "title": "Lateral Raise (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "422B08F1",
+    "title": "Lateral Raise (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D5D0354D",
+    "title": "Lateral Raise (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D731CCA8",
+    "title": "Lateral Squat",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "04e9848d-cdcb-4a6a-947e-efc54a47d779",
+    "title": "Lat Pulldown",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "reps_only"
+  },
+  {
+    "id": "D2FE7B2E",
+    "title": "Lat Pulldown (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6A6C31A5",
+    "title": "Lat Pulldown (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4E5257DE",
+    "title": "Lat Pulldown - Close Grip (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "473CF5B8",
+    "title": "Lat Pulldown (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "2962ada9-bbac-4aee-be3a-7cf7e418f52a",
+    "title": "Leg Curl (Machine)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "reps_only"
+  },
+  {
+    "id": "75A4F6C4",
+    "title": "Leg Extension (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0EB695C9",
+    "title": "Leg Press Horizontal (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C7973E0E",
+    "title": "Leg Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0482DA98",
+    "title": "Leg Raise Parallel Bars",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "293483AD",
+    "title": "Low Cable Fly Crossovers",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8A2E6481",
+    "title": "Low Row (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "upper_back",
+    "type": "reps_only"
+  },
+  {
+    "id": "6D54A050",
+    "title": "L-Sit Hold",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "duration"
+  },
+  {
+    "id": "5E1A7777",
+    "title": "Lunge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "6E6EE645",
+    "title": "Lunge (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B537D09F",
+    "title": "Lunge (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "BD5935CF",
+    "title": "Lying Knee Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "B8127AD1",
+    "title": "Lying Leg Curl (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "09C9F635",
+    "title": "Lying Leg Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "22FEDCA4",
+    "title": "Lying Neck Curls",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "neck",
+    "type": "reps_only"
+  },
+  {
+    "id": "31B8DA0F",
+    "title": "Lying Neck Curls (Weighted)",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "neck",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0910BD28",
+    "title": "Lying Neck Extension",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "neck",
+    "type": "reps_only"
+  },
+  {
+    "id": "D6A73CF2",
+    "title": "Lying Neck Extension (Weighted)",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "neck",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C732C341",
+    "title": "Meadows Rows (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F49E31D6",
+    "title": "Mountain Climber",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "9F9C164B",
+    "title": "Muscle Up",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "full_body",
+    "type": "reps_only"
+  },
+  {
+    "id": "F60BDDF8",
+    "title": "Negative Pull Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "lats",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "108D7A14",
+    "title": "Nordic Hamstrings Curls",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "hamstrings",
+    "type": "reps_only"
+  },
+  {
+    "id": "DBE341AA",
+    "title": "Oblique Crunch",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "B140095E",
+    "title": "One Arm Push Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "582ADA23",
+    "title": "Overhead Curl (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4C6721B9",
+    "title": "Overhead Dumbbell Lunge",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "54E60954",
+    "title": "Overhead Plate Raise",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7B8D84E8",
+    "title": "Overhead Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6AC96645",
+    "title": "Overhead Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B09A1304",
+    "title": "Overhead Press (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "2CFED196",
+    "title": "Overhead Squat",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B5EFBF9C",
+    "title": "Overhead Triceps Extension (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FBEE8279",
+    "title": "Partial Glute Bridge (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CE1054CE",
+    "title": "Pause Squat (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "018ADC12",
+    "title": "Pendlay Row (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5c1359da-9bad-4b5f-b352-71cd169988c4",
+    "title": "Pendulum Squat",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "30E293E3",
+    "title": "Pendulum Squat (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0EFE8162",
+    "title": "Pike Pushup",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "shoulders",
+    "type": "reps_only"
+  },
+  {
+    "id": "EC2510CD",
+    "title": "Pilates",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "duration"
+  },
+  {
+    "id": "942BAD12",
+    "title": "Pinwheel Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3FF6A22E",
+    "title": "Pistol Squat",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "C6C9B8A0",
+    "title": "Plank",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "duration"
+  },
+  {
+    "id": "31436F5D",
+    "title": "Plank Pushup",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "9283ABD5",
+    "title": "Plate Curl",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "DBF9273A",
+    "title": "Plate Front Raise",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "982734D4",
+    "title": "Plate Press",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9373FSD1",
+    "title": "Plate Squeeze (Svend Press)",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C628D768",
+    "title": "Power Clean",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E22F9358",
+    "title": "Power Snatch",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "4F942934",
+    "title": "Preacher Curl (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FAB6EB2F",
+    "title": "Preacher Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1E9A6B8E",
+    "title": "Preacher Curl (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "84A77566",
+    "title": "Press Under",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "428e445a-932e-4bf1-9df4-637d51d1afb8",
+    "title": "Prowler Push",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "67280085",
+    "title": "Pullover (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B123DD01",
+    "title": "Pullover (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1B2B1E7C",
+    "title": "Pull Up",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "reps_only"
+  },
+  {
+    "id": "2C37EC5E",
+    "title": "Pull Up (Assisted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "bodyweight_assisted"
+  },
+  {
+    "id": "56808FD2",
+    "title": "Pull Up (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "lats",
+    "type": "bodyweight_assisted"
+  },
+  {
+    "id": "729237D1",
+    "title": "Pull Up (Weighted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "542F3CD5",
+    "title": "Push Press",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "392887AA",
+    "title": "Push Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "947DAC23",
+    "title": "Push Up - Close Grip",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "19372ABC",
+    "title": "Push Up (Weighted)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "FE389074",
+    "title": "Rack Pull",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C315DC2A",
+    "title": "Rear Delt Reverse Fly (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E5988A0A",
+    "title": "Rear Delt Reverse Fly (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D8281C62",
+    "title": "Rear Delt Reverse Fly (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1ADF8723",
+    "title": "Rear Kick (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1B89CA1B",
+    "title": "Renegade Row (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7952B5CD",
+    "title": "Reverse Crunch",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "112FC6B7",
+    "title": "Reverse Curl (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9F48F858",
+    "title": "Reverse Curl (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B567DD46",
+    "title": "Reverse Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9264ADA1",
+    "title": "Reverse Fly Single Arm (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1FF4097B",
+    "title": "Reverse Grip Concentration Curl",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "046E25A2",
+    "title": "Reverse Grip Lat Pulldown (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7C0028C3",
+    "title": "Reverse Hyperextension",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C284D923",
+    "title": "Reverse Lunge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "818BA121",
+    "title": "Reverse Lunge (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FFDA283B",
+    "title": "Reverse Lunge (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "99B49684",
+    "title": "Reverse Plank",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "duration"
+  },
+  {
+    "id": "51A0EDAA",
+    "title": "Ring Dips",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "5F09F0FC",
+    "title": "Ring Pull Up",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "lats",
+    "type": "reps_only"
+  },
+  {
+    "id": "AEA56BDC",
+    "title": "Ring Push Up",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "chest",
+    "type": "reps_only"
+  },
+  {
+    "id": "2B4B7310",
+    "title": "Romanian Deadlift (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "72CFFAD5",
+    "title": "Romanian Deadlift (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "234897AB",
+    "title": "Rope Cable Curl",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9273BA17",
+    "title": "Rope Straight Arm Pulldown",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0222DB42",
+    "title": "Rowing Machine",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "AC1BB830",
+    "title": "Running",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "BB83BDDE",
+    "title": "Russian Twist (Bodyweight)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "2982AA23",
+    "title": "Russian Twist (Weighted)",
+    "is_custom": false,
+    "equipment": "plate",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C7AE420A",
+    "title": "Scapular Pull Ups",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "upper_back",
+    "type": "reps_only"
+  },
+  {
+    "id": "cf3ed740-7942-4759-90b8-d6af0366a0e8",
+    "title": "Seal Row",
+    "is_custom": true,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F1D60854",
+    "title": "Seated Cable Row - Bar Grip",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C3BCABB3",
+    "title": "Seated Cable Row - Bar Wide Grip",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0393F233",
+    "title": "Seated Cable Row - V Grip (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "062AB91A",
+    "title": "Seated Calf Raise",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6B4C797E",
+    "title": "Seated Chest Flys (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5122E7D9",
+    "title": "Seated Dip Machine",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8BAB2735",
+    "title": "Seated Incline Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9372FFAA",
+    "title": "Seated Lateral Raise (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "11A123F3",
+    "title": "Seated Leg Curl (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "91AF29E0",
+    "title": "Seated Overhead Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9930DF71",
+    "title": "Seated Overhead Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1006DF48",
+    "title": "Seated Palms Up Wrist Curl",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "forearms",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1DF4A847",
+    "title": "Seated Row (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9237BAD1",
+    "title": "Seated Shoulder Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "234BC743",
+    "title": "Seated Triceps Press",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9202CC23",
+    "title": "Seated Wrist Extension (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "forearms",
+    "type": "weight_reps"
+  },
+  {
+    "id": "878CD1D0",
+    "title": "Shoulder Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "059E835D",
+    "title": "Shoulder Press (Machine Plates)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "502FCE31",
+    "title": "Shoulder Taps",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "shoulders",
+    "type": "reps_only"
+  },
+  {
+    "id": "0B841777",
+    "title": "Shrug (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "traps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "FFABC123",
+    "title": "Shrug (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "traps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "ABEC557F",
+    "title": "Shrug (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "traps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "19A38071",
+    "title": "Shrug (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "traps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "742E5BD5",
+    "title": "Shrug (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "traps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "37F9EDA7",
+    "title": "Side Bend",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "026FD047",
+    "title": "Side Bend (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E3EDA509",
+    "title": "Side Plank",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "duration"
+  },
+  {
+    "id": "8372BBCC",
+    "title": "Single Arm Cable Crossover",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "chest",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D0C4A899",
+    "title": "Single Arm Cable Row",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B33B526E",
+    "title": "Single Arm Curl (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "1837BA23",
+    "title": "Single Arm Landmine Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "DE68C825",
+    "title": "Single Arm Lateral Raise (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "2EE45F81",
+    "title": "Single Arm Lat Pulldown",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8347DFD1",
+    "title": "Single Arm Tricep Extension (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "552AB030",
+    "title": "Single Arm Triceps Pushdown (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "629AE73D",
+    "title": "Single Leg Extensions",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CBC0D834",
+    "title": "Single Leg Glute Bridge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "487B3755",
+    "title": "Single Leg Hip Thrust",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "glutes",
+    "type": "reps_only"
+  },
+  {
+    "id": "D1CD146F",
+    "title": "Single Leg Hip Thrust (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3FD83744",
+    "title": "Single Leg Press (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "93472AC1",
+    "title": "Single Leg Romanian Deadlift (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "937292AB",
+    "title": "Single Leg Romanian Deadlift (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "238BA231",
+    "title": "Single Leg Standing Calf Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "calves",
+    "type": "reps_only"
+  },
+  {
+    "id": "E51CCBE5",
+    "title": "Single Leg Standing Calf Raise (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5DA40761",
+    "title": "Single Leg Standing Calf Raise (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B05C2C29",
+    "title": "Single Leg Standing Calf Raise (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "F5DEF1EB",
+    "title": "Sissy Squat (Weighted)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "022DF610",
+    "title": "Sit Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "9237BA12",
+    "title": "Sit Up (Weighted)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "24A809EF",
+    "title": "Skating",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "84325755",
+    "title": "Skiing",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "875F585F",
+    "title": "Skullcrusher (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "68F8A292",
+    "title": "Skullcrusher (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "749f5129-549f-4e67-83b6-663ad7e1fd3d",
+    "title": "Skull Crusher (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7757171F",
+    "title": "Sled Push",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "full_body",
+    "type": "distance_duration"
+  },
+  {
+    "id": "FB09C938",
+    "title": "Snatch",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "911A58D3",
+    "title": "Snowboarding",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "2348AB72",
+    "title": "Spider Curl (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "90427D4A",
+    "title": "Spider Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C10A5AC9",
+    "title": "Spiderman",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "213AB238",
+    "title": "Spinning",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "duration"
+  },
+  {
+    "id": "E764B907",
+    "title": "Split Jerk",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "20C1A3CB",
+    "title": "Split Squat (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9283BABA",
+    "title": "Sprints",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "F1258206",
+    "title": "Squat (Band)",
+    "is_custom": false,
+    "equipment": "resistance_band",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D04AC939",
+    "title": "Squat (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "9694DA61",
+    "title": "Squat (Bodyweight)",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "DCFF3E9F",
+    "title": "Squat (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CC35A01F",
+    "title": "Squat (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A8814C06",
+    "title": "Squat Row",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "DDCC3821",
+    "title": "Squat (Smith Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B82D6418",
+    "title": "Squat (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "4377A52B",
+    "title": "Stair Machine (Floors)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "floors_duration"
+  },
+  {
+    "id": "4377A52C",
+    "title": "Stair Machine (Steps)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "steps_duration"
+  },
+  {
+    "id": "ACB2751D",
+    "title": "Standing Cable Glute Kickbacks",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "06745E58",
+    "title": "Standing Calf Raise",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "calves",
+    "type": "reps_only"
+  },
+  {
+    "id": "E53CCBE5",
+    "title": "Standing Calf Raise (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6DA40660",
+    "title": "Standing Calf Raise (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "E05C2C38",
+    "title": "Standing Calf Raise (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "AA52E8D2",
+    "title": "Standing Calf Raise (Smith)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "calves",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6120CAAB",
+    "title": "Standing Leg Curls",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "073032BB",
+    "title": "Standing Military Press (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "128A2381",
+    "title": "Step Up",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "EE2938D1",
+    "title": "Sternum Pull up (Gironda)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "reps_only"
+  },
+  {
+    "id": "9bee4055-66ef-4094-8b2f-a210b6fc9c72",
+    "title": "Stiff Leg Deadlift (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "D2387AB1",
+    "title": "Straight Arm Lat Pulldown (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "2A48E443",
+    "title": "Straight Leg Deadlift",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "hamstrings",
+    "type": "weight_reps"
+  },
+  {
+    "id": "527DA061",
+    "title": "Stretching",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "duration"
+  },
+  {
+    "id": "D20D7BBE",
+    "title": "Sumo Deadlift",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "glutes",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3F5F8D40",
+    "title": "Sumo Squat",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "6622E5A0",
+    "title": "Sumo Squat (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "05293BCA",
+    "title": "Sumo Squat (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "5E10D0E6",
+    "title": "Sumo Squat (Kettlebell)",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "218DA87C",
+    "title": "Superman",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "lower_back",
+    "type": "reps_only"
+  },
+  {
+    "id": "B60A678F",
+    "title": "Swimming",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "08A2974E",
+    "title": "T Bar Row",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "upper_back",
+    "type": "weight_reps"
+  },
+  {
+    "id": "90E506D5",
+    "title": "Thruster (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "10313AFD",
+    "title": "Thruster (Kettlebell)",
+    "is_custom": false,
+    "equipment": "kettlebell",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "B94E35E1",
+    "title": "Toes to Bar",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "75BAC5C3",
+    "title": "Toe Touch",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "FBB62888",
+    "title": "Torso Rotation",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "abdominals",
+    "type": "weight_reps"
+  },
+  {
+    "id": "243710DE",
+    "title": "Treadmill",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "28BB4A95",
+    "title": "Triceps Dip",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "4B4BF8C2",
+    "title": "Triceps Dip (Assisted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "bodyweight_assisted"
+  },
+  {
+    "id": "10347BAC",
+    "title": "Triceps Dip (Weighted)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "bodyweight_weighted"
+  },
+  {
+    "id": "2F8D3067",
+    "title": "Triceps Extension (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "21310F5F",
+    "title": "Triceps Extension (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3765684D",
+    "title": "Triceps Extension (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "3092FADD",
+    "title": "Triceps Extension (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6182EE83",
+    "title": "Triceps Extension (Suspension)",
+    "is_custom": false,
+    "equipment": "suspension",
+    "muscle": "triceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "EC3B69A3",
+    "title": "Triceps Kickback (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6127A3AD",
+    "title": "Triceps Kickback (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "CDC472B1",
+    "title": "Triceps Pressdown",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "93A552C6",
+    "title": "Triceps Pushdown",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "94B7239B",
+    "title": "Triceps Rope Pushdown",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7AB9A362",
+    "title": "Upright Row (Barbell)",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "286C1D0B",
+    "title": "Upright Row (Cable)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "797F0782",
+    "title": "Upright Row (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "shoulders",
+    "type": "weight_reps"
+  },
+  {
+    "id": "72880C57",
+    "title": "Vertical Traction (Machine)",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "weight_reps"
+  },
+  {
+    "id": "6BE68B62",
+    "title": "V Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "abdominals",
+    "type": "reps_only"
+  },
+  {
+    "id": "72297E8C",
+    "title": "Waiter Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "33EDD7DB",
+    "title": "Walking",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "cardio",
+    "type": "distance_duration"
+  },
+  {
+    "id": "32HKJ34K",
+    "title": "Walking Lunge",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "quadriceps",
+    "type": "reps_only"
+  },
+  {
+    "id": "4f2b425a-3acf-4132-b230-2c595fe97a1d",
+    "title": "Walking Lunge (Dumbbell)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "A733CC5B",
+    "title": "Walking Lunge (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "quadriceps",
+    "type": "short_distance_weight"
+  },
+  {
+    "id": "66bb3e88-c499-43bf-8e31-5468b97721fe",
+    "title": "wall angel",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "traps",
+    "type": "reps_only"
+  },
+  {
+    "id": "A1F47ACC",
+    "title": "Wall Ball",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "full_body",
+    "type": "weight_reps"
+  },
+  {
+    "id": "C8706C80",
+    "title": "Wall Sit",
+    "is_custom": false,
+    "equipment": "other",
+    "muscle": "quadriceps",
+    "type": "duration"
+  },
+  {
+    "id": "79EF4E4F",
+    "title": "Warm Up",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "duration"
+  },
+  {
+    "id": "B31EB524",
+    "title": "Wide-Elbow Triceps Press (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "triceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "7C50F118",
+    "title": "Wide Pull Up",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "lats",
+    "type": "reps_only"
+  },
+  {
+    "id": "1520a586-fe55-4b7d-8c78-b7f0b88c94ba",
+    "title": "Wood Chop (Cable)",
+    "is_custom": true,
+    "equipment": "none",
+    "muscle": "other",
+    "type": "weight_reps"
+  },
+  {
+    "id": "0E4523F4",
+    "title": "Wrist Roller",
+    "is_custom": false,
+    "equipment": "machine",
+    "muscle": "forearms",
+    "type": "weight_reps"
+  },
+  {
+    "id": "8C9D2928",
+    "title": "Yoga",
+    "is_custom": false,
+    "equipment": "none",
+    "muscle": "full_body",
+    "type": "duration"
+  },
+  {
+    "id": "40C6A9FC",
+    "title": "Zercher Squat",
+    "is_custom": false,
+    "equipment": "barbell",
+    "muscle": "quadriceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "123EE239",
+    "title": "Zottman Curl (Dumbbell)",
+    "is_custom": false,
+    "equipment": "dumbbell",
+    "muscle": "biceps",
+    "type": "weight_reps"
+  },
+  {
+    "id": "05b8fc7d-4a5b-4961-a090-b70d932f482a",
+    "title": "Spoto Press",
+    "is_custom": true,
+    "equipment": "barbell",
+    "muscle": "chest",
+    "type": "weight_reps"
+  }
+]
