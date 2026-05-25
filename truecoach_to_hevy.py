@@ -94,9 +94,12 @@ _INLINE_HEADING_RE = re.compile(
     re.IGNORECASE,
 )
 
-# "Start at 45kg" / "Start with 22.5kg" / "@ 60kg"
+# "Start at 45kg" / "Start with 22.5kg" / "Start 12.5kg" / "@ 60kg"
+# The "at|with" preposition is optional — Cillian sometimes writes the
+# starting weight bare ("Start 12.5kg"). Word boundary on `start` keeps
+# "Restart" / "starting" from matching.
 _WEIGHT_HINT_RE = re.compile(
-    r"\b(?:start\s+(?:at|with)|@)\s*(\d+(?:\.\d+)?)\s*kg",
+    r"(?:\bstart(?:\s+(?:at|with))?\s+|@\s*)(\d+(?:\.\d+)?)\s*kg",
     re.IGNORECASE,
 )
 
@@ -110,6 +113,34 @@ _PROGRESS_RE = re.compile(
 _ACCUMULATE_RE = re.compile(
     r"\baccumulate\s+\d+\s*-\s*(\d+)\s*(?:total\s*)?reps?",
     re.IGNORECASE,
+)
+
+# "12-20 total bodyweight reps" — Cillian sometimes omits the "Accumulate"
+# keyword and just writes the total-reps target as a standalone line.
+# Anchored to start-of-line so this doesn't accidentally consume a
+# template-set line like "3 x 8-12 total reps" (the leading "3 x" makes
+# that fail the anchor). The qualifier word ("bodyweight", "bw", or
+# nothing) is optional.
+_TOTAL_REPS_LINE_RE = re.compile(
+    r"^\s*\d+\s*-\s*(\d+)\s+total(?:\s+(?:bodyweight|bw))?\s+reps?\b",
+    re.IGNORECASE,
+)
+
+# "3-5 sets x RIR 2-3" / "4 sets, RIR 2" / "3-5 sets" — set count without
+# a numeric rep target. Cillian uses this for bodyweight movements where
+# the rep target is "as many as you can while keeping the RIR". We emit
+# `<sets_hi>` placeholder sets (weight=0, reps=None) so the exercise
+# survives the PUT and Mark fills in reps when he logs it. Anchored to
+# line-start so it can't eat unrelated text. Matched ONLY AFTER the
+# regular `_TEMPLATE_SET_RE` fails — that one handles the common
+# "<sets> x <reps>" case.
+_SETS_NO_REPS_RE = re.compile(
+    r"""
+    ^\s*
+    (?P<sets_lo>\d+)(?:\s*-\s*(?P<sets_hi>\d+))?
+    \s+sets?\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 
 # Demo-video markers — the TC plan often ends with a "Demo video" link
@@ -141,13 +172,16 @@ _INLINE_BOUNDARY_RE = re.compile(
     r"warm[\s\-]?ups?\b"
     # "Work", "Working", "Work sets", "Working sets" — section heading
     r"|work(?:ing)?(?:\s+sets?)?\b"
-    r"|start\s+(?:at|with)\b"
+    # "Start at Nkg" / "Start with Nkg" / "Start Nkg" — preposition optional
+    r"|start\s+(?:at\s+|with\s+)?\d+(?:\.\d+)?\s*kg\b"
     r"|progress\s+by\b"
     r"|each\s+(?:hand|arm|leg|side)\b"
     r"|rir\s+\d"
     r"|bar\s*[x×]"
     r"|\d+(?:\.\d+)?\s*kg\s*[x×]"
     r"|\d+(?:\s*-\s*\d+)?\s*[x×]\s*\d"
+    # "3-5 sets" / "5 sets" — set count with no rep target
+    r"|\d+(?:\s*-\s*\d+)?\s+sets?\b"
     r")",
     re.IGNORECASE,
 )
@@ -180,7 +214,10 @@ _DUMBBELL_MARKERS = (
 class ParsedSet:
     type: str
     weight_kg: float
-    reps: int
+    # Optional: None means "unspecified" — emitted for plans that prescribe
+    # a set count without a rep target (e.g. "3-5 sets x RIR 2-3"). Hevy
+    # renders these as blank, so Mark fills in the actual reps when logging.
+    reps: Optional[int]
 
 
 @dataclass
@@ -318,6 +355,19 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
                 section = "working"
             continue
 
+        # "N-M total [bodyweight] reps" — same intent as Accumulate, just
+        # phrased without the keyword. Take the HIGH end as the rep target
+        # and emit a single bodyweight set (weight_kg=0) so Hevy keeps the
+        # exercise. Anchored to line-start so it can't eat a template line.
+        m_total = _TOTAL_REPS_LINE_RE.match(line)
+        if m_total:
+            total = int(m_total.group(1))
+            working_sets.append(ParsedSet(type="normal", weight_kg=0, reps=total))
+            notes_parts.append(line)
+            if section == "pre":
+                section = "working"
+            continue
+
         # Explicit weight hint that is NOT also a set ("Start at 45kg")
         m_hint = _WEIGHT_HINT_RE.search(line)
         if m_hint and not _INDIV_SET_RE.match(line) and not _TEMPLATE_SET_RE.match(line):
@@ -332,6 +382,38 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
             # heuristic kicks back in.
             section_seen_indiv = False
             notes_parts.append(line)
+
+            # Inline template after the hint, e.g. "Start with 50kg 4 x 8-10".
+            # Process the trailing portion as a template line so the sets
+            # aren't lost. The just-captured hint supplies the weight.
+            tail_after_hint = line[m_hint.end():].lstrip(" ,;:-")
+            m_tail_tmpl = _TEMPLATE_SET_RE.match(tail_after_hint)
+            if m_tail_tmpl:
+                if section == "warmup":
+                    section = "working"
+                    section_seen_indiv = False
+                if section == "pre":
+                    section = "working"
+                nsets = _high_end(
+                    m_tail_tmpl.group("sets_lo"),
+                    m_tail_tmpl.group("sets_hi"),
+                )
+                reps = _high_end(
+                    m_tail_tmpl.group("reps_lo"),
+                    m_tail_tmpl.group("reps_hi"),
+                )
+                # Weight precedence: explicit `@ Nkg` on the template wins
+                # over the hint we just captured.
+                inline_weight = m_tail_tmpl.group("weight")
+                if inline_weight:
+                    base = _maybe_double(float(inline_weight), title, plan_text)
+                else:
+                    base = pending_weight_hint
+                step = progress_step if (base > 0 and progress_step) else 0
+                for i in range(nsets):
+                    working_sets.append(
+                        ParsedSet("normal", base + step * i, reps)
+                    )
             continue
 
         # Individual-set prefix: "<weight>kg × <reps>"
@@ -435,6 +517,31 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
             tail = line[m_tmpl.end():].strip()
             if tail:
                 notes_parts.append(tail)
+            continue
+
+        # "<n>-<m> sets x RIR ..." / "<n> sets" — set count with no
+        # numeric rep target. Emit <sets_hi> placeholder sets so the
+        # exercise survives the PUT; Mark fills in the actual reps in
+        # Hevy. Bodyweight (weight=0) for now; if a weight hint is
+        # present we still respect it.
+        m_sets_only = _SETS_NO_REPS_RE.match(line)
+        if m_sets_only:
+            if section == "warmup":
+                section = "working"
+                section_seen_indiv = False
+            if section == "pre":
+                section = "working"
+            nsets = _high_end(m_sets_only.group("sets_lo"),
+                              m_sets_only.group("sets_hi"))
+            if pending_weight_hint is not None:
+                base = pending_weight_hint
+            elif fallback_hint is not None:
+                base = fallback_hint
+            else:
+                base = 0.0
+            for _ in range(nsets):
+                working_sets.append(ParsedSet("normal", base, None))
+            notes_parts.append(line)
             continue
 
         # Didn't match any set pattern → keep for notes
@@ -745,6 +852,30 @@ def _rest_seconds_for(resolved_title: Optional[str]) -> int:
     return 90
 
 
+# Placeholder set shipped when the parser can't extract any sets from the
+# plan text. Hevy's PUT /v1/routines/{id} silently drops exercises whose
+# `sets` array is empty (returns 200 with the exercise missing from the
+# response), so we always emit at least one set to guarantee the exercise
+# survives. weight_kg/reps are null so it reads as "fill me in" in Hevy.
+_FALLBACK_SET = {"type": "normal", "weight_kg": None, "reps": None}
+
+
+def _sets_payload_with_fallback(parsed) -> list:
+    """Convert ParsedPlan.sets to Hevy-shape dicts, inserting a single
+    placeholder set when no sets were parsed. Adds a warning so callers
+    can surface the fallback (see also bidirectional_sync.validate_put_response)."""
+    out = [
+        {"type": s.type, "weight_kg": s.weight_kg, "reps": s.reps}
+        for s in parsed.sets
+    ]
+    if not out:
+        out.append(dict(_FALLBACK_SET))
+        parsed.warnings.append(
+            "Inserted placeholder set (no sets parsed) — fill in reps/weight in Hevy"
+        )
+    return out
+
+
 def build_hevy_exercise(
     title: str,
     plan_text: Optional[str],
@@ -778,10 +909,7 @@ def build_hevy_exercise(
         prefix = override.get("notes_prefix")
         if prefix:
             parsed.notes = (prefix + "\n" + parsed.notes).strip()
-        sets_payload = [
-            {"type": s.type, "weight_kg": s.weight_kg, "reps": s.reps}
-            for s in parsed.sets
-        ]
+        sets_payload = _sets_payload_with_fallback(parsed)
         return {
             "tc_title": title,
             "position_code": position_code,
@@ -832,10 +960,7 @@ def build_hevy_exercise(
             conf = c_conf
             break
 
-    sets_payload = [
-        {"type": s.type, "weight_kg": s.weight_kg, "reps": s.reps}
-        for s in parsed.sets
-    ]
+    sets_payload = _sets_payload_with_fallback(parsed)
     return {
         "tc_title": title,
         "position_code": position_code,

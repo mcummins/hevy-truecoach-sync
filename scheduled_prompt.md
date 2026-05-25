@@ -560,7 +560,27 @@ For each `plan.reverse[i]`:
         routine_id: "<new_id>" }`. `commit()` will store the new id in
      `cache.day_routines` so subsequent runs PUT instead of POST.
 
-6. Non-success status → `{ day_name, status: "error", error: "<status>
+6. **Verify the response before recording `status: "ok"`.** Hevy can
+   return 200 while silently dropping exercises (historically: any
+   exercise with `sets: []` is removed without error). Persist both the
+   request body and the response, then run:
+
+   ```bash
+   python3 bidirectional_sync.py validate-put \
+     --payload  /tmp/sync-run-<iso>/put_body_<day>.json \
+     --response /tmp/sync-run-<iso>/put_response_<day>.json
+   ```
+
+   Exit 0 = clean (record `status: "ok"` as above). Exit 11 = silent
+   drop detected; the printed JSON has a `dropped` array with each
+   missing exercise. In that case record
+   `{ day_name, status: "error", tc_content_hash,
+      error: "silent_drop: <template ids>", routine_id: <id> }`
+   — **do NOT** include `payload_hash`, so `commit()` won't cache the
+   bad hash and the next run will retry. Surface the drop in the Step 6
+   log line (e.g. `reverse=1 error (silent_drop Monday: Chin-Up)`).
+
+7. Non-success status → `{ day_name, status: "error", error: "<status>
    <body-snippet>" }`.
 
 ### REVERSE TOMBSTONES (Hevy folder cleanup)

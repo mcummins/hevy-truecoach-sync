@@ -764,3 +764,104 @@ def test_add_override_writes_and_clears_pending(tmp_path, monkeypatch):
     assert overrides["stiff leg deadlift"]["exercise_template_id"] == "RIGHT_ID"
     pending_after = json.loads((tmp_path / "pa.json").read_text())
     assert "stiff leg deadlift" not in pending_after
+
+
+# ---------- validate_put_response (Fix c) ----------------------------------
+
+def _ex(tid, sets=None, tc_title=None):
+    """Helper: minimal exercise dict for the validator."""
+    out = {"exercise_template_id": tid, "sets": sets or []}
+    if tc_title:
+        out["tc_title"] = tc_title
+    return out
+
+
+def test_validate_put_response_clean_match():
+    """All exercises echoed back → ok, no drops, no extras."""
+    payload = {"routine": {"title": "Monday", "exercises": [
+        _ex("A1", [{"reps": 5}]), _ex("B2", [{"reps": 10}]),
+    ]}}
+    response = {"routine": [{"title": "Monday", "exercises": [
+        _ex("A1", [{"reps": 5}]), _ex("B2", [{"reps": 10}]),
+    ]}]}
+    r = bs.validate_put_response(payload, response)
+    assert r["ok"] is True
+    assert r["payload_count"] == 2
+    assert r["response_count"] == 2
+    assert r["dropped"] == []
+    assert r["extra"] == []
+
+
+def test_validate_put_response_detects_silent_drop():
+    """The exact failure mode from 2026-05-18: Chin-Up with sets:[]
+    silently dropped by Hevy. Validator must flag it."""
+    payload = {"routine": {"exercises": [
+        _ex("C6272009", [{"reps": 5}], tc_title="Deadlift"),
+        _ex("29083183", [], tc_title="Chin-Up"),    # the dropped one
+        _ex("B33B526E", [{"reps": 12}], tc_title="Single Arm Curl"),
+    ]}}
+    # Hevy's response omits Chin-Up entirely.
+    response = {"routine": [{"exercises": [
+        _ex("C6272009", [{"reps": 5}]),
+        _ex("B33B526E", [{"reps": 12}]),
+    ]}]}
+    r = bs.validate_put_response(payload, response)
+    assert r["ok"] is False
+    assert r["payload_count"] == 3
+    assert r["response_count"] == 2
+    assert len(r["dropped"]) == 1
+    assert r["dropped"][0]["template"] == "29083183"
+    assert r["dropped"][0]["title"] == "Chin-Up"
+    assert r["dropped"][0]["index"] == 1
+
+
+def test_validate_put_response_accepts_bare_routine_payload():
+    """Caller may pass the inner routine object directly (no 'routine'
+    wrapper) — accept both shapes for ergonomics."""
+    bare_payload = {"exercises": [_ex("A1", [{"reps": 5}])]}
+    response = {"routine": [{"exercises": [_ex("A1", [{"reps": 5}])]}]}
+    r = bs.validate_put_response(bare_payload, response)
+    assert r["ok"] is True
+
+
+def test_validate_put_response_accepts_singleton_routine_response():
+    """Some endpoints return {"routine": {...}} instead of a list."""
+    payload = {"routine": {"exercises": [_ex("A1", [{"reps": 5}])]}}
+    response = {"routine": {"exercises": [_ex("A1", [{"reps": 5}])]}}
+    r = bs.validate_put_response(payload, response)
+    assert r["ok"] is True
+
+
+def test_validate_put_response_flags_extra_in_response():
+    """If Hevy returns more exercises than we sent (auto-injection,
+    weird state), flag it via the 'extra' bucket."""
+    payload = {"routine": {"exercises": [_ex("A1", [{"reps": 5}])]}}
+    response = {"routine": [{"exercises": [
+        _ex("A1", [{"reps": 5}]), _ex("MYSTERY", [{"reps": 1}]),
+    ]}]}
+    r = bs.validate_put_response(payload, response)
+    assert r["ok"] is False
+    assert r["extra"] == [{"index": 1, "template": "MYSTERY"}]
+
+
+def test_validate_put_response_handles_duplicate_templates():
+    """Same template_id appearing twice in payload — counts must match.
+    If response keeps both, ok; if only one survives, the second
+    instance is reported as dropped (FIFO consumption)."""
+    payload = {"routine": {"exercises": [
+        _ex("A1", [{"reps": 5}], tc_title="First"),
+        _ex("A1", [{"reps": 5}], tc_title="Second"),
+    ]}}
+    response_keeps_both = {"routine": [{"exercises": [
+        _ex("A1", [{"reps": 5}]), _ex("A1", [{"reps": 5}]),
+    ]}]}
+    r = bs.validate_put_response(payload, response_keeps_both)
+    assert r["ok"] is True
+
+    response_keeps_one = {"routine": [{"exercises": [_ex("A1", [{"reps": 5}])]}]}
+    r = bs.validate_put_response(payload, response_keeps_one)
+    assert r["ok"] is False
+    assert len(r["dropped"]) == 1
+    # The first occurrence consumed the response slot; second was dropped.
+    assert r["dropped"][0]["index"] == 1
+    assert r["dropped"][0]["title"] == "Second"

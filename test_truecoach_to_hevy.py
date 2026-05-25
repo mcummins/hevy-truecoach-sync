@@ -50,6 +50,109 @@ def test_template_bodyweight_pushup():
     assert "RIR 2-3" in p.notes
 
 
+def test_sets_only_no_rep_target():
+    """'<n>-<m> sets x RIR ...' — set count with no numeric rep target.
+    Should emit <sets_hi> bodyweight sets with reps=None so the exercise
+    survives the Hevy PUT and Mark fills in reps when he logs it."""
+    p = parse_plan("Push-Up", "Keep hands just outside ribs\n3-5 sets x RIR 2-3")
+    assert len(p.working_sets) == 5
+    for s in p.working_sets:
+        assert s.weight_kg == 0
+        assert s.reps is None
+    assert "3-5 sets x RIR 2-3" in p.notes
+    assert "Keep hands just outside ribs" in p.notes
+    # And no "no sets parsed" warning
+    assert not any("No sets parsed" in w for w in p.warnings)
+
+
+def test_sets_only_singular_form():
+    """Trailing 's' on 'sets' is optional and the lower bound is also OK
+    by itself ('5 sets x RIR 1')."""
+    p = parse_plan("Plank Hold", "5 sets x RIR 1")
+    assert len(p.working_sets) == 5
+    assert all(s.reps is None for s in p.working_sets)
+
+
+def test_weight_hint_bare_start():
+    """'Start 12.5kg' without 'at' or 'with' — Cillian writes it both ways.
+    A dumbbell exercise should still get the doubling."""
+    p = parse_plan(
+        "Chest Supported Row (Dumbbell)",
+        "3-4 x 8-12\nRIR 2\nStart 12.5kg\nProgress by 2.5-5kg",
+    )
+    assert len(p.working_sets) == 4
+    # Dumbbell exercise → weight doubled (12.5 × 2 = 25)
+    assert all(s.weight_kg == 25.0 for s in p.working_sets)
+    assert all(s.reps == 12 for s in p.working_sets)
+    assert "Start 12.5kg" in p.notes
+
+
+def test_weight_hint_bare_start_does_not_match_restart():
+    """`\\bstart` should not match in 'Restart' or 'starting'."""
+    p = parse_plan("Squat", "Restart 5kg\n3 x 5")
+    # No working sets with weight=5; template line "3 x 5" has no hint.
+    assert all(s.weight_kg == 0 for s in p.working_sets)
+
+
+def test_inline_hint_with_trailing_template():
+    """'Start with 50kg 4 x 8-10' — hint and template on the same line.
+    Should produce 4 working sets at the hint weight, with HIGH-end reps."""
+    p = parse_plan(
+        "Stiff Leg Deadlift",
+        "Warm-up bar x 10\n30 x 5-10\n"
+        "Start with 50kg 4 x 8-10\n"
+        "Use straps if needed",
+    )
+    assert len(p.warmup_sets) == 2
+    assert len(p.working_sets) == 4
+    # No "Progress by" → flat 50kg across all 4 sets
+    assert all(s.weight_kg == 50.0 for s in p.working_sets)
+    assert all(s.reps == 10 for s in p.working_sets)
+
+
+def test_inline_hint_bare_start_with_template():
+    """'Start 60kg 3 x 5' — bare 'Start' (no at/with) + inline template."""
+    p = parse_plan("Bench", "Start 60kg 3 x 5")
+    assert len(p.working_sets) == 3
+    assert all(s.weight_kg == 60.0 and s.reps == 5 for s in p.working_sets)
+
+
+def test_inline_hint_with_template_and_progression():
+    """Inline 'Start with Nkg M x reps' combined with a 'Progress by' line
+    on a big lift should ramp the working sets across the session."""
+    p = parse_plan(
+        "Stiff Leg Deadlift",
+        "Start with 50kg 4 x 8-10\nProgress by 2.5kg",
+    )
+    assert len(p.working_sets) == 4
+    weights = [s.weight_kg for s in p.working_sets]
+    assert weights == [50.0, 52.5, 55.0, 57.5]
+
+
+def test_inline_hint_dumbbell_doubles():
+    """Inline hint + template on a dumbbell exercise should double the
+    per-hand starting weight."""
+    p = parse_plan(
+        "Bicep Curl (Dumbbell)",
+        "Start at 10kg 3 x 8-12",
+    )
+    assert len(p.working_sets) == 3
+    # 10kg per hand → 20kg total
+    assert all(s.weight_kg == 20.0 for s in p.working_sets)
+    assert all(s.reps == 12 for s in p.working_sets)
+
+
+def test_inline_hint_explicit_at_kg_overrides():
+    """If the template carries its own '@ Nkg' it takes precedence over
+    the just-captured hint."""
+    p = parse_plan(
+        "Squat",
+        "Start at 50kg 3 x 5 @ 55kg",
+    )
+    assert len(p.working_sets) == 3
+    assert all(s.weight_kg == 55.0 for s in p.working_sets)
+
+
 # ---------------------------------------------------------------------------
 # Plan parser — warmups
 # ---------------------------------------------------------------------------
@@ -765,6 +868,98 @@ def test_working_rep_range_still_takes_high_end():
     plan = "Working sets\n50kg x 6-10"
     p = parse_plan("Bench", plan)
     assert p.working_sets[0].reps == 10
+
+
+# ---------------------------------------------------------------------------
+# Plan parser — "total reps" without the "Accumulate" keyword (Fix b)
+# ---------------------------------------------------------------------------
+
+def test_total_bodyweight_reps_without_accumulate_keyword():
+    """Regression: Cillian sometimes writes the total-reps target as
+    "12-20 total bodyweight reps" without the leading "Accumulate".
+    The parser must still emit a working set (HIGH end of the range)
+    so the exercise lands in Hevy with at least one set."""
+    plan = "12-20 total bodyweight reps\nRIR 2-3"
+    p = parse_plan("Chin-Up", plan)
+    assert len(p.working_sets) == 1
+    assert p.working_sets[0].weight_kg == 0
+    assert p.working_sets[0].reps == 20
+    # The directive line is preserved in notes for the human reader.
+    assert "12-20 total bodyweight reps" in p.notes
+    assert "RIR 2-3" in p.notes
+
+
+def test_total_reps_without_bodyweight_qualifier():
+    """Plain 'N-M total reps' (no 'bodyweight') should also match."""
+    plan = "15-25 total reps"
+    p = parse_plan("Chin-Up", plan)
+    assert len(p.working_sets) == 1
+    assert p.working_sets[0].reps == 25
+
+
+def test_total_reps_with_bw_abbreviation():
+    """'bw' is accepted as a synonym for 'bodyweight'."""
+    plan = "10-15 total bw reps"
+    p = parse_plan("Push-Up", plan)
+    assert len(p.working_sets) == 1
+    assert p.working_sets[0].reps == 15
+
+
+def test_total_reps_line_does_not_eat_template_set_line():
+    """'3 x 8-12 total reps' is a template line (3 sets of 8-12 reps,
+    annotated 'total reps'). The line-start anchor on the new regex
+    must NOT eat this — the existing _TEMPLATE_SET_RE path should fire."""
+    plan = "3 x 8-12 total reps"
+    p = parse_plan("Push-Up", plan)
+    # Template parse: 3 sets at high-end reps (12).
+    assert len(p.working_sets) == 3
+    assert all(s.reps == 12 for s in p.working_sets)
+
+
+# ---------------------------------------------------------------------------
+# build_hevy_exercise — placeholder set fallback (Fix a)
+# ---------------------------------------------------------------------------
+
+def test_build_hevy_empty_sets_gets_placeholder():
+    """When no set pattern matches, build_hevy_exercise must still emit
+    at least one set — Hevy silently drops exercises with sets:[]."""
+    from truecoach_to_hevy import build_hevy_exercise
+    r = _mk_resolver()
+    # A plan that intentionally matches no set pattern. (Plain prose.)
+    out = build_hevy_exercise("Bench", "Focus on form today.", r)
+    assert len(out["sets"]) >= 1, "must never ship empty sets"
+    s = out["sets"][0]
+    assert s["type"] == "normal"
+    assert s["weight_kg"] is None
+    assert s["reps"] is None
+    # Warning surfaces the fallback so callers can flag it.
+    assert any("placeholder" in w.lower() for w in out["warnings"])
+
+
+def test_build_hevy_existing_sets_unchanged_by_fallback():
+    """Fallback must NOT activate when the parser produced real sets."""
+    from truecoach_to_hevy import build_hevy_exercise
+    r = _mk_resolver()
+    out = build_hevy_exercise("Bench", "3 x 5 @ 60kg", r)
+    assert len(out["sets"]) == 3
+    assert all(s["weight_kg"] == 60.0 for s in out["sets"])
+    # No placeholder warning when the parser found real sets.
+    assert not any("placeholder" in w.lower() for w in out["warnings"])
+
+
+def test_build_hevy_chinup_bodyweight_total_reps_full_pipeline():
+    """End-to-end: the failing Monday Chin-Up plan now produces a real
+    set (Fix b path), not a placeholder."""
+    from truecoach_to_hevy import build_hevy_exercise
+    r = _mk_resolver()
+    out = build_hevy_exercise(
+        "Chin-Up", "12-20 total bodyweight reps\nRIR 2-3", r,
+    )
+    assert len(out["sets"]) == 1
+    assert out["sets"][0]["weight_kg"] == 0
+    assert out["sets"][0]["reps"] == 20
+    # No placeholder warning — we actually parsed a real set.
+    assert not any("placeholder" in w.lower() for w in out["warnings"])
 
 
 # ---------------------------------------------------------------------------

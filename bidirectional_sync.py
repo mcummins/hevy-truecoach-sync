@@ -222,6 +222,90 @@ def sha(obj: Any) -> str:
     return hashlib.sha256(_canon(obj).encode()).hexdigest()
 
 
+# ---------- post-PUT verification ------------------------------------------
+
+def validate_put_response(payload_body: dict, response_obj: dict) -> dict:
+    """Compare a routine PUT (or POST) request body against Hevy's response
+    so the runner can detect silent exercise drops.
+
+    Hevy occasionally accepts a routine write with HTTP 200 but quietly
+    omits exercises from what it stores — historically observed when an
+    exercise's `sets` array is empty. The response body always echoes the
+    saved routine, so we can compare by position and template id.
+
+    Args:
+        payload_body: the request body we sent. Either the inner routine
+            object ({"title", "exercises", ...}) or the wrapped form
+            ({"routine": {...}}). Both shapes accepted for convenience.
+        response_obj: the parsed JSON response. Hevy returns either
+            {"routine": [<routine>]} (PUT) or {"routine": <routine>}
+            depending on the endpoint; both shapes accepted.
+
+    Returns:
+        {
+          "ok":               True iff every payload exercise is present,
+          "payload_count":    int,
+          "response_count":   int,
+          "dropped":          [{"index": i, "template": tid,
+                                "title": <tc title or None>}, ...],
+          "extra":            [{"index": i, "template": tid}, ...],
+        }
+
+        `dropped` lists exercises in the request that don't appear in the
+        response. `extra` lists exercises in the response with no
+        counterpart in the request (rare; surfaces if Hevy auto-adds or
+        reorders unexpectedly).
+    """
+    body = payload_body.get("routine", payload_body) if isinstance(payload_body, dict) else {}
+    resp = response_obj.get("routine") if isinstance(response_obj, dict) else None
+    if isinstance(resp, list):
+        resp_routine = resp[0] if resp else {}
+    else:
+        resp_routine = resp or {}
+
+    sent = list(body.get("exercises") or [])
+    got = list(resp_routine.get("exercises") or [])
+
+    got_templates = [e.get("exercise_template_id") for e in got]
+    got_counts: dict = {}
+    for tid in got_templates:
+        got_counts[tid] = got_counts.get(tid, 0) + 1
+
+    dropped = []
+    for i, ex in enumerate(sent):
+        tid = ex.get("exercise_template_id")
+        if got_counts.get(tid, 0) > 0:
+            got_counts[tid] -= 1
+        else:
+            dropped.append({
+                "index": i,
+                "template": tid,
+                # tc_title is a preview-only field; if the runner stripped
+                # it before sending, fall back to None.
+                "title": ex.get("tc_title") or ex.get("title"),
+            })
+
+    sent_counts: dict = {}
+    for ex in sent:
+        tid = ex.get("exercise_template_id")
+        sent_counts[tid] = sent_counts.get(tid, 0) + 1
+    extra = []
+    for i, ex in enumerate(got):
+        tid = ex.get("exercise_template_id")
+        if sent_counts.get(tid, 0) > 0:
+            sent_counts[tid] -= 1
+        else:
+            extra.append({"index": i, "template": tid})
+
+    return {
+        "ok": not dropped and not extra,
+        "payload_count": len(sent),
+        "response_count": len(got),
+        "dropped": dropped,
+        "extra": extra,
+    }
+
+
 def fingerprint_tc_list(pairs) -> str:
     """Hash a list of (tc_id, date) tuples — order-insensitive."""
     normalised = sorted((str(a), str(b)) for a, b in pairs)
@@ -726,6 +810,18 @@ def main(argv: list[str]) -> int:
     p_sha = sub.add_parser("sha")
     p_sha.add_argument("--file", required=True)
 
+    p_val = sub.add_parser(
+        "validate-put",
+        help="Compare a PUT request body to the response — detect "
+             "silent exercise drops. Exits 0 if ok, 11 if drops found "
+             "(suitable for shell-script branching).",
+    )
+    p_val.add_argument("--payload", required=True,
+                       help="JSON file containing the PUT request body "
+                            "(wrapped {\"routine\":{...}} or bare).")
+    p_val.add_argument("--response", required=True,
+                       help="JSON file containing Hevy's PUT response.")
+
     p_ov = sub.add_parser("add-override",
                           help="Approve a TC title → Hevy template mapping")
     p_ov.add_argument("--tc-title", required=True)
@@ -806,6 +902,13 @@ def main(argv: list[str]) -> int:
         obj = _read_json(args.file)
         print(sha(obj))
         return 0
+
+    if args.cmd == "validate-put":
+        report = validate_put_response(
+            _read_json(args.payload), _read_json(args.response),
+        )
+        print(json.dumps(report, indent=2))
+        return 0 if report["ok"] else 11
 
     if args.cmd == "add-override":
         entry = add_override(
