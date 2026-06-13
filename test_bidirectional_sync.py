@@ -296,7 +296,7 @@ def test_plan_reverse_emits_when_form_tip_changes_but_content_unchanged():
 
 def test_plan_reverse_emits_when_form_tip_expires():
     """When a tip times out the planner should re-push so the routine
-    drops the now-stale Form Tip block."""
+    drops the now-stale Coach Tip block."""
     content = {"exercises": [{"position": "A", "title": "Bench Press",
                               "plan": "Start at 50kg\n3 x 5"}]}
     cache = _empty()
@@ -314,7 +314,11 @@ def test_plan_reverse_emits_when_form_tip_expires():
     # Compute the cached hash AS IF the tip was still active when last pushed,
     # by temporarily faking captured_at to recent then restoring.
     cache["form_tips"]["bench press"]["captured_at"] = "2026-04-25T12:00:00+00:00"
-    h_with_tip = bs.tc_content_hash(cache, tc_workout)
+    # Pin the clock to the active period (mirrors plan()'s sig_now =
+    # today @ noon UTC) so the baseline deterministically captures the
+    # tip-active hash regardless of the real wall-clock at test time.
+    sig_now = datetime(2026, 5, 4, 12, 0, tzinfo=timezone.utc)
+    h_with_tip = bs.tc_content_hash(cache, tc_workout, now=sig_now)
     cache["form_tips"]["bench press"]["captured_at"] = "2026-04-01T12:00:00+00:00"
     cache["reverse"] = {"Monday": {"tc_content_hash": h_with_tip,
                                     "payload_hash": "p-old"}}

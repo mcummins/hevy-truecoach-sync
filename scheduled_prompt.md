@@ -167,6 +167,15 @@ encouragement-only, an "all good" remark, or no mention at all leaves
 its prior tip in place. Cillian sometimes reviews workouts several days
 late, so we never treat current silence as endorsement.
 
+**Pending lifecycle**: a workout stays in `feedback_pending` until a
+coach note actually appears on it — Cillian *always* comments
+eventually, sometimes a few days after the session. A pending workout
+is **never dropped just because no note was visible on a given run**.
+The single exception is a hard age cap: `feedback_tips.py prune` retires
+pending workouts older than **14 days** (`PENDING_MAX_AGE_DAYS`), on the
+assumption that a comment that old is never coming. Don't hand-remove
+pending entries.
+
 **Probe (cheap, always)**:
 ```bash
 python3 feedback_tips.py list-pending   # queued by prior forward syncs
@@ -200,12 +209,19 @@ For each workout to process:
    result as a single note for classification.
 
    **If there is no coach note on the past-tab card yet** (no `CO
-   <Coach Name>` line / no note body), do NOT call `apply-note` for
-   this workout. Leave it in `feedback_pending`; it'll be picked up on
-   a later run once Cillian reviews. Move on to the next workout.
+   <Coach Name>` line / no note body), still call `apply-note` for this
+   workout but with `"note_present": false` (classifications can be
+   empty). That records nothing and **leaves the workout in
+   `feedback_pending`** so it's re-checked on a later run once Cillian
+   reviews. Then move on to the next workout. Do NOT set
+   `note_present: false` together with real classifications — the flag
+   means "no note existed at all". The `prune` step (run at the end) is
+   what eventually retires a pending workout that's gone >14 days with
+   no note; you never drop one by hand.
 
-   This is the common case for a workout completed in the last day or
-   two — Cillian often reviews asynchronously.
+   This "no note yet" case is common for a workout completed in the last
+   day or two — Cillian often reviews asynchronously, but he always
+   comments eventually, so the workout must stay queued.
 2. **Get the canonical exercise order** for that workout. Click into the
    workout (or use the existing detail-extractor flow from Step 2b) to
    capture `[{position, title}]`. Order matters — the coach typically
@@ -213,30 +229,38 @@ For each workout to process:
    when his shorthand differs (`Chins` → `Chin-Up`, `Push-Up` →
    `Push-Up`, etc.).
 3. **Classify** the note. This is YOUR job (Claude), not a regex:
-   - For each exercise in the canonical order, decide if the note contains
-     **form-tip** content for it. Form tips are technique-focused
-     instructions, e.g. "tuck the elbows", "drive through your heels",
-     "slow the eccentric". Encouragement ("looking great", "love the
-     creativity"), milestone calls ("getting to 10 kg is great!"),
-     "all good" / "no notes" affirmations, and pure observations without
-     an action are NOT form tips.
-   - Extract **verbatim, lightly trimmed**: quote the form-tip sentences
-     and stitch together immediately related observations
+   - For each exercise in the canonical order, decide if the note
+     contains an **actionable** comment for it. Keep **any actionable
+     instruction**, which is broader than just technique. Two kinds count:
+     - **Technique cues** — "tuck the elbows", "drive through your
+       heels", "slow the eccentric".
+     - **Next-session prescriptions** — load/rep/tempo/progression
+       instructions for next time, e.g. "Try the 20kg next time",
+       "add a rep", "drop the rest to 90s", "go a bit deeper next set".
+     Drop **pure encouragement** with no instruction: "good job",
+     "looking great", "love the creativity", milestone calls ("getting
+     to 10kg is great!"), "all good" / "no notes" affirmations, and bare
+     observations with no action. If a comment both praises and
+     instructs, keep the instruction.
+   - Extract **verbatim, lightly trimmed**: quote the actionable
+     sentence(s) and stitch together immediately related observations
      (e.g. "Keep thinking about tucking the elbows — your elbows flared
      out on reps 3 and 4."). Don't paraphrase. Don't summarise.
-   - Output one entry per canonical exercise: a string for a form tip,
-     `null` for encouragement-only / "all good" / no-mention. The
+   - Output one entry per canonical exercise: a string for an actionable
+     tip, `null` for encouragement-only / "all good" / no-mention. The
      `null` entries do NOT clear prior tips — they're recorded only so
      `feedback_processed.exercises_seen` reflects what was in the
      workout.
-4. **Apply**. Write a JSON file:
+4. **Apply**. Write a JSON file (`note_present: true` because a note
+   exists — the no-note case in step 1 uses `false`):
    ```json
    {
      "tc_id": "597481198",
+     "note_present": true,
      "exercises": ["Bench Press", "Squat", "Chin-Up", ...],
      "classifications": {
        "Bench Press": "Keep thinking about tucking the elbows...",
-       "Squat": null,
+       "Squat": "Try the 20kg next time.",
        "Chin-Up": null
      }
    }
@@ -245,16 +269,17 @@ For each workout to process:
    ```bash
    python3 feedback_tips.py apply-note --file /tmp/sync-run-<iso>/feedback_<tc_id>.json
    ```
-   The CLI moves the workout from `feedback_pending` to
-   `feedback_processed` and **only sets** the form-tip slots that have
-   a truthy classification. Null classifications never mutate
-   `form_tips` (additive-only rule). Notes are immutable in TC so a
-   workout id appearing in `feedback_processed` is sufficient — we
-   won't re-process it on future runs.
+   With `note_present: true` the CLI moves the workout from
+   `feedback_pending` to `feedback_processed` and **only sets** the tip
+   slots that have a truthy classification. Null classifications never
+   mutate `form_tips` (additive-only rule). Notes are immutable in TC so
+   a workout id appearing in `feedback_processed` is sufficient — we
+   won't re-process it on future runs. With `note_present: false` the
+   CLI records nothing and leaves the workout in `feedback_pending`.
 
 After processing all workouts:
 ```bash
-python3 feedback_tips.py prune          # drop tips older than 30 days
+python3 feedback_tips.py prune          # drop tips >30d AND pending workouts >14d
 # Only mark bootstrap done once you've actually applied a note (i.e.
 # called apply-note) for every workout in the last-25 window that has
 # a note. Workouts you left in feedback_pending because Cillian hadn't
@@ -485,12 +510,13 @@ For each `plan.reverse[i]`:
        form_tip=tip,
    )
    ```
-   `build_hevy_exercise` appends a `Form Tip: <tip>` block after the
+   `build_hevy_exercise` appends a `Coach Tip: <tip>` block after the
    parsed notes — separated by `---` when prior notes exist, or as a
    bare line when notes are empty (no orphan separator). Passing
    `form_tip=None` leaves notes alone. The helper also strips any prior
-   form-tip block (either shape) before appending, so re-pushes don't
-   accumulate duplicates when the tip changes.
+   coach-tip block (either shape, including the legacy `Form Tip:`
+   label) before appending, so re-pushes don't accumulate duplicates
+   when the tip changes.
 
    **Confidence gate.** After building, inspect each
    `built["confidence"]`. The accepted ("unambiguous") values are:

@@ -173,6 +173,68 @@ def test_apply_note_moves_pending_to_processed():
     assert cache["feedback_processed"]["tc1"]["exercises_seen"] == ["Bench Press"]
 
 
+def test_apply_note_no_note_keeps_pending():
+    """note_present=False must NOT drop the workout — Cillian comments
+    late, so it stays queued for a later run and records nothing."""
+    cache = _make_pending_cache()
+    summary = ft.apply_note(
+        cache,
+        tc_workout_id="tc1",
+        exercises=["Bench Press"],
+        classifications={},
+        note_present=False,
+        now=datetime(2026, 5, 11, 13, 0, tzinfo=timezone.utc),
+    )
+    # Still pending, nothing processed, no tips set.
+    assert [e["tc_workout_id"] for e in cache["feedback_pending"]] == ["tc1"]
+    assert "tc1" not in cache["feedback_processed"]
+    assert cache["form_tips"] == {}
+    assert summary["set"] == []
+    assert summary.get("kept_pending") is True
+
+
+def test_apply_note_present_with_only_encouragement_clears_pending():
+    """A real note that's pure encouragement (all null) is still a
+    *reviewed* workout — it leaves the pending queue."""
+    cache = _make_pending_cache()
+    ft.apply_note(
+        cache,
+        tc_workout_id="tc1",
+        exercises=["Bench Press"],
+        classifications={"Bench Press": None},
+        note_present=True,
+        now=datetime(2026, 5, 11, 13, 0, tzinfo=timezone.utc),
+    )
+    assert cache["feedback_pending"] == []
+    assert "tc1" in cache["feedback_processed"]
+
+
+def test_prune_stale_pending_drops_old_keeps_fresh():
+    now = datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc)
+    cache: dict = {}
+    # 16 days old → dropped; 5 days old → kept.
+    ft.record_pending(cache, "tc-stale", "2026-05-04",
+                      now=now - timedelta(days=16))
+    ft.record_pending(cache, "tc-fresh", "2026-05-15",
+                      now=now - timedelta(days=5))
+    dropped = ft.prune_stale_pending(cache, now=now)
+    assert dropped == ["tc-stale"]
+    pending_ids = [e["tc_workout_id"] for e in cache["feedback_pending"]]
+    assert pending_ids == ["tc-fresh"]
+    # The given-up workout is recorded so it isn't re-queued/re-scanned.
+    assert cache["feedback_processed"]["tc-stale"]["gave_up"] is True
+    assert ft.is_already_processed(cache, "tc-stale")
+
+
+def test_prune_stale_pending_keeps_entry_with_missing_added_at():
+    cache: dict = {"feedback_pending": [{"tc_workout_id": "tc-x",
+                                         "date": "2026-05-01"}]}
+    dropped = ft.prune_stale_pending(
+        cache, now=datetime(2026, 6, 1, tzinfo=timezone.utc))
+    assert dropped == []
+    assert len(cache["feedback_pending"]) == 1
+
+
 def test_apply_note_empty_string_classification_preserves_prior_tip():
     """Whitespace-only classification is treated like null — additive-only,
     so the prior tip survives."""
@@ -258,37 +320,56 @@ def test_prune_drops_expired_only():
 def test_append_form_tip_to_empty_notes_omits_separator():
     """No '---' if there are no prior notes to separate from."""
     out = ft.append_form_tip("", "Tuck elbows.")
-    assert out == "Form Tip: Tuck elbows."
+    assert out == "Coach Tip: Tuck elbows."
 
 
 def test_append_form_tip_after_existing_notes_uses_separator():
     out = ft.append_form_tip("Start at 50kg\n3 x 5", "Tuck elbows.")
-    assert out == "Start at 50kg\n3 x 5\n---\nForm Tip: Tuck elbows."
+    assert out == "Start at 50kg\n3 x 5\n---\nCoach Tip: Tuck elbows."
 
 
 def test_append_form_tip_strips_prior_separator_block_before_adding_new():
-    notes = "Start at 50kg\n---\nForm Tip: Old guidance"
+    notes = "Start at 50kg\n---\nCoach Tip: Old guidance"
     out = ft.append_form_tip(notes, "New guidance")
-    assert out == "Start at 50kg\n---\nForm Tip: New guidance"
+    assert out == "Start at 50kg\n---\nCoach Tip: New guidance"
 
 
 def test_append_form_tip_strips_prior_bare_block_before_adding_new():
-    """When notes used to be empty (bare 'Form Tip: ...' shape), and now
+    """When notes used to be empty (bare 'Coach Tip: ...' shape), and now
     prior content has been added or the tip itself is being replaced,
     we still need to strip the prior bare line cleanly."""
-    notes = "Form Tip: Old guidance"
+    notes = "Coach Tip: Old guidance"
     out = ft.append_form_tip(notes, "New guidance")
-    assert out == "Form Tip: New guidance"
+    assert out == "Coach Tip: New guidance"
+
+
+def test_append_form_tip_replaces_legacy_form_tip_label():
+    """Blocks written under the old 'Form Tip:' label are stripped and
+    replaced by a single 'Coach Tip:' block — no duplicate, no remnant."""
+    notes = "Start at 50kg\n---\nForm Tip: Old guidance"
+    out = ft.append_form_tip(notes, "New guidance")
+    assert out == "Start at 50kg\n---\nCoach Tip: New guidance"
+    assert "Form Tip" not in out
+
+    bare = ft.append_form_tip("Form Tip: Old guidance", "New guidance")
+    assert bare == "Coach Tip: New guidance"
 
 
 def test_append_form_tip_with_none_strips_prior_separator_block():
-    notes = "Start at 50kg\n---\nForm Tip: Old guidance"
+    notes = "Start at 50kg\n---\nCoach Tip: Old guidance"
     out = ft.append_form_tip(notes, None)
     assert out == "Start at 50kg"
 
 
+def test_append_form_tip_with_none_strips_legacy_block():
+    """None also clears a legacy 'Form Tip:' block cleanly."""
+    assert ft.append_form_tip("Form Tip: Old guidance", None) == ""
+    assert ft.append_form_tip(
+        "Start at 50kg\n---\nForm Tip: Old guidance", None) == "Start at 50kg"
+
+
 def test_append_form_tip_with_none_strips_prior_bare_block():
-    notes = "Form Tip: Old guidance"
+    notes = "Coach Tip: Old guidance"
     out = ft.append_form_tip(notes, None)
     assert out == ""
 
@@ -316,14 +397,14 @@ def test_build_hevy_exercise_appends_form_tip():
         form_tip="Keep thinking about tucking the elbows.",
     )
     assert out["notes"].endswith(
-        "\n---\nForm Tip: Keep thinking about tucking the elbows."
+        "\n---\nCoach Tip: Keep thinking about tucking the elbows."
     )
 
 
 def test_build_hevy_exercise_no_tip_leaves_notes_untouched():
     r = _mk_resolver()
     out = t2h.build_hevy_exercise("Bench Press", "Start at 50kg\n3 x 5", r)
-    assert "Form Tip" not in out["notes"]
+    assert "Coach Tip" not in out["notes"]
 
 
 # ---------------------------------------------------------------------------

@@ -886,7 +886,7 @@ def build_hevy_exercise(
 ) -> dict:
     """Assemble a preview dict for a single Hevy routine exercise.
 
-    If `form_tip` is provided, a "---\\nForm Tip: ..." block is appended
+    If `form_tip` is provided, a "---\\nCoach Tip: ..." block is appended
     after the parsed notes. The same parsing happens regardless — the tip
     is layered on at the end so cache hashes for the plan stay stable
     when only the tip changes (callers can hash before vs. after).

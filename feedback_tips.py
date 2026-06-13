@@ -1,18 +1,30 @@
 """Coach-feedback ingestion for the Hevy↔TrueCoach sync.
 
 Cillian leaves freeform notes on each TC workout he reviews. A note typically
-mixes encouragement and form tips, e.g.:
+mixes encouragement and actionable coaching, e.g.:
 
     Nice gym!
     Bench - Technique getting better here overall. Keep thinking about
             tucking the elbows. Reps 3 and 4 were the hardest because
             your elbows flared out.
-    Squat - These are still looking great. Your strength and technique
-            has come on a long way here.
+    Squat - These are still looking great. Try the 20kg next time.
     Chins - That's all good. Getting to 10kg is great!
 
-We want the form-tip portion to surface in Hevy alongside the next routine,
-so Mark sees it while training. Encouragement is dropped.
+We want the *actionable* portion to surface in Hevy alongside the next
+routine, so Mark sees it while training. "Actionable" is broader than
+technique cues: a next-session instruction ("try the 20kg next time",
+"add a rep", "slow the eccentric") counts too. Pure encouragement
+("nice gym!", "looking great", "getting to 10kg is great!") is dropped.
+The surfaced text is labelled "Coach Tip:" in Hevy (older pushes used
+"Form Tip:", still recognised so re-pushes replace rather than duplicate).
+
+Two things keep a workout from being lost while we wait for Cillian:
+
+  * apply_note(..., note_present=False) records nothing and leaves the
+    workout in feedback_pending — Cillian often reviews several days
+    late, so "no note yet" must NOT drop it from the queue.
+  * prune_stale_pending() is the only thing that gives up on a pending
+    workout, after PENDING_MAX_AGE_DAYS (14) with still no note.
 
 This module is the pure data layer: load/save state, decide whether a tip
 is still active (≤30 days old), apply a runner-classified note to the
@@ -57,7 +69,14 @@ from typing import Iterable, Optional
 
 
 TIP_TTL_DAYS = 30
-FORM_TIP_PREFIX = "Form Tip: "
+PENDING_MAX_AGE_DAYS = 14
+COACH_TIP_PREFIX = "Coach Tip: "
+# Earlier pushes labelled the block "Form Tip: ". Still recognised when
+# stripping so a re-push replaces the legacy block instead of duplicating it.
+_LEGACY_TIP_PREFIXES = ("Form Tip: ",)
+_ALL_TIP_PREFIXES = (COACH_TIP_PREFIX,) + _LEGACY_TIP_PREFIXES
+_ANY_TIP_PREFIX_RE = "(?:" + "|".join(
+    re.escape(p) for p in _ALL_TIP_PREFIXES) + ")"
 FORM_TIP_SEPARATOR = "---"
 BOOTSTRAP_WORKOUT_COUNT = 25
 
@@ -136,27 +155,34 @@ def apply_note(
     tc_workout_id: str,
     exercises: Iterable[str],
     classifications: dict[str, Optional[str]],
+    note_present: bool = True,
     now: Optional[datetime] = None,
 ) -> dict:
     """Update form_tips from a classified note.
 
-    Rules (additive only — silence never clears):
+    ``note_present`` gates whether the workout leaves the pending queue:
 
-      * Truthy classification ⇒ SET / REPLACE the slot. A newer form tip
-        from Cillian overrides any prior tip on the same exercise.
+      * note_present=False ⇒ Cillian hasn't commented yet. Record
+        NOTHING — no form_tips, no feedback_processed entry — and LEAVE
+        the workout in feedback_pending so a later run picks up the
+        comment once it appears. Cillian sometimes reviews several days
+        late, so "no note yet" must never drop a workout. The only thing
+        that eventually gives up is `prune_stale_pending` (after
+        PENDING_MAX_AGE_DAYS). Returns {set:[], cleared:[], kept_pending:True}.
+      * note_present=True ⇒ a note exists (even if it's pure
+        encouragement). Apply the classifications below, mark the
+        workout processed, and remove it from feedback_pending.
+
+    Classification rules when a note IS present (additive only — silence
+    never clears):
+
+      * Truthy classification ⇒ SET / REPLACE the slot. A newer tip from
+        Cillian overrides any prior tip on the same exercise.
       * Null / empty / whitespace / missing classification ⇒ leave the
         prior tip in place. Encouragement, an "all good" comment, or no
         mention at all are all read as "the prior tip isn't refreshed
         but also isn't refuted". The tip lives out its 30-day TTL
         (`prune_expired`) or is replaced by a future note.
-
-    This is intentionally conservative: Cillian sometimes reviews
-    workouts several days after they're logged, so a workout with no
-    coach note yet should be left in `feedback_pending` (the runner is
-    responsible for that decision — it shouldn't call apply_note at all
-    for a workout that has no note). Even when this function IS called
-    on a real note, an absent mention for a given exercise is treated
-    as "no new information", not "resolved".
 
     Args:
         tc_workout_id: TC workout the note belongs to.
@@ -166,6 +192,9 @@ def apply_note(
                    gate clearing.
         classifications: { canonical_title: tip_string_or_null }, one
                    entry per exercise. Only truthy values mutate state.
+                   Ignored entirely when note_present=False.
+        note_present: whether a coach note was actually found on the
+                   workout. See above.
         now: timezone-aware datetime; defaults to UTC now.
 
     Returns a small summary dict {set: [...], cleared: []}. The
@@ -174,6 +203,11 @@ def apply_note(
     """
     _ensure_slots(cache)
     now = now or datetime.now(timezone.utc)
+
+    if not note_present:
+        # No coach comment yet — keep the workout queued for a later run.
+        return {"set": [], "cleared": [], "kept_pending": True}
+
     exercises = list(exercises)
     set_keys: list[str] = []
 
@@ -267,6 +301,47 @@ def prune_expired(cache: dict, now: Optional[datetime] = None) -> list[str]:
     return removed
 
 
+def prune_stale_pending(cache: dict, now: Optional[datetime] = None) -> list[str]:
+    """Give up on pending workouts older than PENDING_MAX_AGE_DAYS.
+
+    A workout normally leaves feedback_pending only when a real coach
+    note is applied (`apply_note` with note_present=True). But Cillian
+    occasionally never comments; without a cap those entries would be
+    re-scanned on every run forever. After PENDING_MAX_AGE_DAYS (counted
+    from `added_at`) we drop the entry and record it under
+    feedback_processed (marked ``gave_up``) so it's neither re-queued by
+    a future forward sync nor re-scanned by the bootstrap window.
+
+    Returns the tc_workout_ids dropped. Entries with a missing or
+    unparseable `added_at` are left in place (we can't age them out).
+    """
+    _ensure_slots(cache)
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=PENDING_MAX_AGE_DAYS)
+    kept: list[dict] = []
+    dropped: list[str] = []
+    for e in cache["feedback_pending"]:
+        added = e.get("added_at")
+        added_dt = None
+        if added:
+            try:
+                added_dt = datetime.fromisoformat(added)
+            except ValueError:
+                added_dt = None
+        if added_dt is not None and added_dt < cutoff:
+            tc_id = e.get("tc_workout_id")
+            dropped.append(tc_id)
+            cache["feedback_processed"][tc_id] = {
+                "processed_at": now.isoformat(),
+                "exercises_seen": [],
+                "gave_up": True,
+            }
+        else:
+            kept.append(e)
+    cache["feedback_pending"] = kept
+    return dropped
+
+
 def needs_bootstrap(cache: dict) -> bool:
     _ensure_slots(cache)
     return not cache["feedback_bootstrap_done"]
@@ -282,42 +357,44 @@ def mark_bootstrap_done(cache: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def append_form_tip(notes: str, tip: Optional[str]) -> str:
-    """Append a form-tip block after the existing notes, idempotently.
+    """Append a coach-tip block after the existing notes, idempotently.
 
-    Strips any prior "---\\nForm Tip: ..." block from `notes` first so
-    re-pushes don't accumulate duplicates when the tip changes or clears.
-    When the existing notes are empty, the separator is dropped — no
-    point in a "---" line above nothing.
+    Strips any prior "---\\nCoach Tip: ..." block from `notes` first
+    (including the legacy "Form Tip: " label) so re-pushes don't
+    accumulate duplicates when the tip changes or clears. When the
+    existing notes are empty, the separator is dropped — no point in a
+    "---" line above nothing.
     """
     base = _strip_form_tip_block(notes or "")
     if not tip:
         return base
-    tip_line = f"{FORM_TIP_PREFIX}{tip.strip()}"
+    tip_line = f"{COACH_TIP_PREFIX}{tip.strip()}"
     if not base:
         return tip_line
     return f"{base}\n{FORM_TIP_SEPARATOR}\n{tip_line}"
 
 
 def _strip_form_tip_block(notes: str) -> str:
-    """Remove any trailing form-tip block.
+    """Remove any trailing coach-tip block.
 
-    Handles both shapes that `append_form_tip` can emit:
-      * "...prior notes...\\n---\\nForm Tip: <tip>"   (notes were non-empty)
-      * "Form Tip: <tip>"                             (notes were empty)
+    Handles both shapes that `append_form_tip` can emit, under either the
+    current "Coach Tip: " label or the legacy "Form Tip: " one:
+      * "...prior notes...\\n---\\nCoach Tip: <tip>"  (notes were non-empty)
+      * "Coach Tip: <tip>"                            (notes were empty)
     """
-    if FORM_TIP_PREFIX not in notes:
+    if not any(p in notes for p in _ALL_TIP_PREFIXES):
         return notes.rstrip()
-    # Try the "with separator" shape first; fall back to a bare form-tip line.
+    # Try the "with separator" shape first; fall back to a bare tip line.
     with_sep = re.compile(
         r"\n?" + re.escape(FORM_TIP_SEPARATOR) + r"\s*\n\s*"
-        + re.escape(FORM_TIP_PREFIX) + r".*\Z",
+        + _ANY_TIP_PREFIX_RE + r".*\Z",
         re.DOTALL,
     )
     stripped = with_sep.sub("", notes)
     if stripped != notes:
         return stripped.rstrip()
     bare = re.compile(
-        r"(?:\A|\n)" + re.escape(FORM_TIP_PREFIX) + r".*\Z",
+        r"(?:\A|\n)" + _ANY_TIP_PREFIX_RE + r".*\Z",
         re.DOTALL,
     )
     return bare.sub("", notes).rstrip()
@@ -341,8 +418,9 @@ def _cli(argv: list[str]) -> int:
     sub.add_parser("dump-tips",
                    help="JSON dump of form_tips with TTL-active flag")
     sub.add_parser("prune",
-                   help="Drop tips older than %d days; print removed keys"
-                        % TIP_TTL_DAYS)
+                   help="Drop tips older than %d days and pending workouts "
+                        "older than %d days; print what was removed"
+                        % (TIP_TTL_DAYS, PENDING_MAX_AGE_DAYS))
     sub.add_parser("bootstrap-status",
                    help="Print whether the last-25 bootstrap has run")
     sub.add_parser("mark-bootstrap-done")
@@ -363,7 +441,8 @@ def _cli(argv: list[str]) -> int:
     )
     p_apply.add_argument("--file", required=True,
                          help="Path to JSON: {tc_id, exercises, "
-                              "classifications: {title: tip_or_null}}")
+                              "classifications: {title: tip_or_null}, "
+                              "note_present: bool}")
 
     args = ap.parse_args(argv)
     cache = load_cache()
@@ -390,9 +469,11 @@ def _cli(argv: list[str]) -> int:
         return 0
 
     if args.cmd == "prune":
-        removed = prune_expired(cache)
+        removed_tips = prune_expired(cache)
+        stale_pending = prune_stale_pending(cache)
         save_cache(cache)
-        print(json.dumps({"removed": removed}))
+        print(json.dumps({"removed_tips": removed_tips,
+                          "stale_pending": stale_pending}))
         return 0
 
     if args.cmd == "bootstrap-status":
@@ -427,6 +508,7 @@ def _cli(argv: list[str]) -> int:
             tc_workout_id=payload["tc_id"],
             exercises=payload.get("exercises", []),
             classifications=payload.get("classifications", {}),
+            note_present=payload.get("note_present", True),
         )
         save_cache(cache)
         print(json.dumps(summary))
