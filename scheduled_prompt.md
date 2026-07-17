@@ -34,25 +34,56 @@ Scratch snapshots for this run go in a throwaway dir — `/tmp/sync-run-<iso>/`.
 
 ## Access
 
+Use the **built-in browser** (`mcp__Claude_Browser__*` tools) for both
+Hevy and TrueCoach. If those tools are not available in this run's
+environment, fall back to the legacy Claude-in-Chrome flow (see
+"Fallback: Claude in Chrome" at the end of this file) and say so in the
+Step 6 log line.
+
 - **Hevy API**: header `api-key: <HEVY_API_KEY>`. The literal value is
   not stored in this repo — load it at task-dispatch time from the local
-  `.env` file (`HEVY_API_KEY=...`, gitignored) or whichever secrets
-  store the runner is using, and substitute it into the snippets below.
-  The sandbox is blocked — use Claude in Chrome. Look for an existing
-  tab at `https://api.hevyapp.com/`; create one if missing. To extract
-  a GET response reliably, use `document.write` + `get_page_text`
-  (base64, blob, and localhost proxies are all blocked):
+  `.env` file (`HEVY_API_KEY=...`, gitignored). Sandbox networking is
+  blocked, so calls go through the browser: navigate a tab to
+  `https://api.hevyapp.com/` (any path — it just establishes the
+  origin), then run same-origin fetches with `javascript_tool`. The
+  built-in browser's `javascript_exec` awaits promises, so return the
+  fetch directly — no `document.write` tricks needed:
 
   ```js
   fetch('https://api.hevyapp.com/v1/workouts?page=1&pageSize=1',
-        { headers: { 'api-key': '<HEVY_API_KEY>' } })
-    .then(r => r.text())
-    .then(t => { document.open(); document.write('<pre>' + t.replace(/</g,'&lt;') + '</pre>'); document.close(); });
+        { headers: { 'api-key': '<HEVY_API_KEY>' } }).then(r => r.text())
   ```
-  Then `get_page_text` on that tab and JSON-parse the `<pre>` contents.
+  JSON-parse the returned string.
 
-- **TrueCoach**: browser-only. Claude in Chrome on `https://app.truecoach.co/`
-  (Mark stays logged in). Upcoming list: `https://app.truecoach.co/client/workouts`.
+- **TrueCoach**: browser-only, `https://app.truecoach.co/`. The built-in
+  browser starts logged out; bootstrap the session from
+  `$AUTO_DIR/.tc_session.json` (gitignored, Dropbox-synced):
+
+  1. Navigate a tab to `https://app.truecoach.co/` (landing on the
+     login page is expected).
+  2. Read the file; for each entry in `cookies`, set
+     `document.cookie = '<name>=<value>; path=/; max-age=33177600; secure; samesite=lax'`.
+     Values are stored in raw URI-encoded `document.cookie` form — set
+     them exactly as-is, do not decode or re-encode.
+  3. Navigate to `https://app.truecoach.co/client/workouts` and verify
+     the tab is the Workouts view, not "Login | TrueCoach".
+  4. Still on the login page ⇒ the token has been revoked. **Fall back
+     to Claude in Chrome for the TrueCoach side** (see the fallback
+     section — Mark's real Chrome stays logged in) and carry on with
+     the run. Mixed mode is fine: keep using the built-in browser for
+     the Hevy API (it doesn't need TC auth). Still surface the problem
+     in the Step 6 log line ("TC session invalid — used Chrome
+     fallback; log in and re-export .tc_session.json") so Mark knows to
+     refresh the file. Abort only if the Chrome fallback is also
+     unavailable or logged out. Never attempt a password login.
+  5. After a successful login check, re-read the
+     `ember_simple_auth-session` cookie from `document.cookie`; if its
+     value differs from the file, write the new value back to
+     `.tc_session.json` (keeps the stored copy fresh if TC ever
+     rotates tokens).
+
+  Upcoming list: `https://app.truecoach.co/client/workouts`. Dismiss
+  the OneTrust cookie banner with "Reject All" if it appears.
 
 ## Hevy folder & routine model (v3)
 
@@ -109,7 +140,7 @@ Exit 0 ⇒ proceed.
 
 ### 1a. Hevy newest workout
 
-One GET via Chrome: `/v1/workouts?page=1&pageSize=1`. Read the response id.
+One GET via the browser: `/v1/workouts?page=1&pageSize=1`. Read the response id.
 
 - If it matches `cache.stage1.last_hevy_workout_id` **and** that id is already
   in `cache.forward` → forward is done for this run. Skip forward drill.
@@ -123,7 +154,7 @@ Two cheap calls:
 tab). Extract `(tc_id, date, day_name)` for every upcoming workout.
 
 **Hevy folder**: GET `https://api.hevyapp.com/v1/routines?page=1&pageSize=10`
-via Chrome (paginate up to `page_count`). Filter to `folder_id == 2355979`
+via the browser (paginate up to `page_count`). Filter to `folder_id == 2355979`
 and capture `[{id, title}, ...]`. This is the current Mark folder state.
 
 Fingerprint the TC list:
@@ -463,6 +494,22 @@ only the most recent Hevy workout is considered).
 
    The toggle class is read ONLY to know when to stop clicking — never as
    a skip signal.
+
+   **Persistence quirk — already-completed exercises (important).**
+   "Update results" only saves exercises TrueCoach considers dirty, and a
+   text-only edit on an exercise that was *already* `is-completed` before
+   this session does NOT mark it dirty — so your appended results silently
+   fail to persist (confirmed via reload; synthetic `input` events and
+   `execCommand('insertText')` both looked applied in the DOM but were
+   dropped on save). The reliable fix: after setting the textarea value,
+   **re-touch that exercise's Completed toggle** (a programmatic
+   `button.exerciseStatus` `.click()` re-asserts `is-completed`, flips it to
+   `is-saving`, and triggers a per-exercise save that captures the current
+   textarea content). Exercises whose toggle you *had* to advance this run
+   (empty/pending/missed → completed) already save their text fine — this
+   only bites the rows that started completed and just got an appended note.
+   **Always verify by reloading the edit page** and re-reading all five
+   textareas before recording `status: ok`.
 4. Save the workout. Record `status: ok` + `tc_workout_id`. Pass the
    workout date through as the `date` field too — `commit()` uses it
    when auto-queuing the TC workout for coach-feedback processing
@@ -677,13 +724,12 @@ pending-approvals count, and feedback activity if non-zero. Examples:
 
 ## Step 7 — Clean up the browser
 
-Close every tab you opened during this run — and also close the **tab group**
-that Claude in Chrome created for them. Closing the tabs alone leaves an empty
-group header in the tab strip. In the Chrome MCP, ungroup or close the group
-after the tabs are gone (e.g. via `tabs_close_mcp` with the group's tab IDs,
-then a follow-up to remove the group itself if any method remains visible, or
-a shortcut to close the group). If you can't find a programmatic way, at
-least ungroup the tabs before closing them so no empty group is left behind.
+Built-in browser: close every extra tab you created during this run
+(`tabs_close`). The main tab can't be closed — leave it on the TC
+workouts page or `about:blank`.
+
+(Chrome fallback only: also close the **tab group** the extension
+created — see the fallback section below.)
 
 ## Guardrails
 
@@ -695,3 +741,40 @@ least ungroup the tabs before closing them so no empty group is left behind.
 - Never delete TC content; forward is append-only. Reverse is full PUT-replace
   (by design).
 - Template IDs come from the generated payload JSON file — never hand-typed.
+- Never enter the TrueCoach password anywhere. TC auth is either the
+  `.tc_session.json` cookie bootstrap or Chrome's existing logged-in
+  session; if both are unavailable, abort and report.
+
+## Fallback: Claude in Chrome (legacy path)
+
+Use when the `mcp__Claude_Browser__*` tools are absent from the run
+environment, or (TrueCoach side only) when the `.tc_session.json`
+bootstrap lands on the login page. This was the primary path before
+2026-07-17; it rides Mark's real Chrome, where he stays logged into
+TrueCoach — no `.tc_session.json` bootstrap is needed (and Chrome's own
+TC session is untouched by the cookie-file flow). Partial fallback is
+fine: TC via Chrome while Hevy API calls stay in the built-in browser.
+
+- **Hevy API**: look for an existing Chrome tab at
+  `https://api.hevyapp.com/`; create one if missing. The Chrome MCP's
+  `javascript_tool` does NOT await promises, so extract GET responses
+  with `document.write` + `get_page_text` (base64, blob, and localhost
+  proxies are all blocked):
+
+  ```js
+  fetch('https://api.hevyapp.com/v1/workouts?page=1&pageSize=1',
+        { headers: { 'api-key': '<HEVY_API_KEY>' } })
+    .then(r => r.text())
+    .then(t => { document.open(); document.write('<pre>' + t.replace(/</g,'&lt;') + '</pre>'); document.close(); });
+  ```
+  Then `get_page_text` on that tab and JSON-parse the `<pre>` contents.
+
+- **TrueCoach**: `https://app.truecoach.co/` — already logged in.
+
+- **Cleanup**: close every tab you opened AND the tab group the
+  extension created for them — closing the tabs alone leaves an empty
+  group header in the tab strip. Ungroup or close the group after the
+  tabs are gone (e.g. `tabs_close_mcp` with the group's tab IDs, then
+  remove the group itself, or a shortcut to close the group). If you
+  can't find a programmatic way, at least ungroup the tabs before
+  closing them.

@@ -1,5 +1,6 @@
 # --- Secrets ---
 .env
+.tc_session.json
 
 # --- Per-user runtime state (not source) ---
 .sync_cache.json
