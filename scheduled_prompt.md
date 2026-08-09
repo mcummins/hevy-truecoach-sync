@@ -480,36 +480,54 @@ only the most recent Hevy workout is considered).
      append the translated text after a single blank line. Never
      overwrite existing content.
 
-   Then ensure the Completed toggle is on:
-   - Read the toggle's class list.
-   - If it explicitly indicates completed (class string contains
-     "complete"), leave it alone.
-   - Otherwise click it, re-read the class list, and repeat — up to **a
-     maximum of 3 clicks** total. The toggle may cycle through
-     intermediate states (`is-pending` → `is-saved` → `is-completed`)
-     so one click isn't always enough.
-   - If after 3 clicks the class still doesn't indicate completed →
-     log an error for that exercise (`status: error`, error: "couldn't
-     advance toggle to Completed") and continue.
+   Track per exercise whether you **modified its textarea** this run
+   (set or appended). You need this flag in the toggle step below.
 
-   The toggle class is read ONLY to know when to stop clicking — never as
-   a skip signal.
+   Then handle the Completed toggle. Read its class list, then follow
+   exactly one of these branches:
+   - **Toggle already indicates completed (class contains "complete")
+     AND you modified the textarea** → you MUST **re-touch the toggle**
+     (one programmatic `button.exerciseStatus` `.click()`; it flips to
+     `is-saving` and re-asserts `is-completed`). This is not optional —
+     see the persistence quirk below. Do NOT "leave it alone": TrueCoach
+     only saves exercises it considers dirty, and a text-only edit on an
+     already-completed exercise is NOT dirty, so without the re-touch
+     your appended text silently fails to persist. This is exactly the
+     rows where Mark left a manual note and completed the exercise
+     himself — the highest-risk case.
+   - **Toggle already completed AND textarea untouched** → do nothing.
+   - **Toggle not completed** → click it, re-read the class list, and
+     repeat — up to **a maximum of 3 clicks** total. The toggle may
+     cycle through intermediate states (`is-pending` → `is-saved` →
+     `is-completed`) so one click isn't always enough. If after 3
+     clicks the class still doesn't indicate completed → log an error
+     for that exercise (`status: error`, error: "couldn't advance
+     toggle to Completed") and continue. (Rows advanced this way save
+     their text fine as a side effect — no extra re-touch needed.)
 
-   **Persistence quirk — already-completed exercises (important).**
-   "Update results" only saves exercises TrueCoach considers dirty, and a
-   text-only edit on an exercise that was *already* `is-completed` before
-   this session does NOT mark it dirty — so your appended results silently
-   fail to persist (confirmed via reload; synthetic `input` events and
-   `execCommand('insertText')` both looked applied in the DOM but were
-   dropped on save). The reliable fix: after setting the textarea value,
-   **re-touch that exercise's Completed toggle** (a programmatic
-   `button.exerciseStatus` `.click()` re-asserts `is-completed`, flips it to
-   `is-saving`, and triggers a per-exercise save that captures the current
-   textarea content). Exercises whose toggle you *had* to advance this run
-   (empty/pending/missed → completed) already save their text fine — this
-   only bites the rows that started completed and just got an appended note.
-   **Always verify by reloading the edit page** and re-reading all five
-   textareas before recording `status: ok`.
+   The toggle class is read ONLY to know which branch applies and when
+   to stop clicking — never as a skip signal.
+
+   **Why the re-touch (persistence quirk).** "Update results" only saves
+   dirty exercises. Synthetic `input` events and `execCommand
+   ('insertText')` both LOOK applied in the DOM but are dropped on save
+   for already-completed rows (confirmed via reload). The toggle
+   re-touch triggers a per-exercise save that captures the current
+   textarea content.
+
+   **Mandatory verification (do not skip).** After saving, reload the
+   edit page and re-read **every** exercise's textarea. For each
+   exercise you modified, confirm the expected text is present:
+   - All present → proceed to record `status: ok`.
+   - Any missing → re-apply the text for the missing rows, re-touch
+     each of their toggles, save, and reload-verify **once more**.
+   - Still missing after the retry → record `status: error` for the
+     workout (error: "append lost on save: <exercise titles>") so
+     `commit()` leaves it uncached and the next run retries. Surface
+     the affected exercises in the Step 6 log line. NEVER record
+     `status: ok` on a failed or skipped verification — an `ok` here
+     caches the workout as synced and the lost text will never be
+     retried.
 4. Save the workout. Record `status: ok` + `tc_workout_id`. Pass the
    workout date through as the `date` field too — `commit()` uses it
    when auto-queuing the TC workout for coach-feedback processing
