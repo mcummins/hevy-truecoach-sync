@@ -285,6 +285,28 @@ def test_dumbbell_by_equipment_field():
     assert _is_dumbbell(ex) is True
     assert "10kg x 10, rir 2" in translate_exercise(ex).render()
 
+def test_kettlebell_by_title_halved():
+    # Regression: 2026-08-10 One Arm Kettlebell Press synced 16/24kg
+    # (Hevy totals) into TC unhalved. Kettlebells follow the dumbbell
+    # convention: Hevy = total both hands, TC = per hand.
+    ex = {
+        "title": "Kettlebell Shoulder Press",
+        "sets": [{"weight_kg": 24.0, "reps": 12, "rpe": 8}],
+    }
+    assert _is_dumbbell(ex) is True
+    assert "12kg x 12, rir 2" in translate_exercise(ex).render()
+
+
+def test_kettlebell_by_equipment_halved():
+    ex = {
+        "title": "One Arm Press",
+        "equipment": "kettlebell",
+        "sets": [{"weight_kg": 16.0, "reps": 10, "rpe": 7}],
+    }
+    assert _is_dumbbell(ex) is True
+    assert "8kg x 10, rir 3" in translate_exercise(ex).render()
+
+
 def test_barbell_not_halved():
     ex = {
         "title": "Barbell Row",
@@ -357,6 +379,14 @@ def test_parse_warmup_count_no_warmup_heading():
     assert parse_warmup_count(FLYE_PLAN_TEXT) is None
     assert parse_warmup_count(CHINUP_PLAN_TEXT) is None
     assert parse_warmup_count(BACKRAISE_PLAN_TEXT) is None
+
+def test_parse_warmup_count_tolerates_dangling_decimal_typo():
+    # Cillian's "12 . kg" typo (decimal point, missing the 5). The warmup
+    # token must still count the set instead of stopping short. See
+    # truecoach_to_hevy._WEIGHT_NUM. (2026-08-21)
+    plan = "Warm-up\nBar x 10\n12 . kg x 8\n40kg x 5\n\nWorking sets\n60kg x 5"
+    assert parse_warmup_count(plan) == 3
+
 
 def test_parse_warmup_count_empty_or_none():
     assert parse_warmup_count("") is None

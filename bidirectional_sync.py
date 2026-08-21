@@ -134,14 +134,23 @@ def _read_json_or_default(path: Path, default):
 
 
 def add_override(tc_title: str, template_id: str, resolved_title: str,
-                 notes_prefix: str | None = None) -> dict:
-    """Append/update an approved mapping. Removes any pending entry for it."""
+                 notes_prefix: str | None = None,
+                 per_hand: bool = False) -> dict:
+    """Append/update an approved mapping. Removes any pending entry for it.
+
+    `per_hand` marks a mapping whose Hevy template loads two implements
+    (dumbbells/kettlebells) even though the TC title is neutral — e.g.
+    "Step Up" → "Dumbbell Step Up". TC plans are written per hand and Hevy
+    stores the two-hand total, so the reverse push doubles the working-set
+    weights. See `truecoach_to_hevy._apply_per_hand_override`.
+    """
     key = _normalise_tc_title(tc_title)
     overrides = _read_json_or_default(_OVERRIDES_PATH, {})
     overrides[key] = {
         "exercise_template_id": template_id,
         "resolved_title": resolved_title,
         "notes_prefix": notes_prefix,
+        "per_hand": bool(per_hand),
         "approved_at": datetime.now(timezone.utc).isoformat(),
         "tc_title_seen": tc_title,
     }
@@ -828,6 +837,11 @@ def main(argv: list[str]) -> int:
     p_ov.add_argument("--template-id", required=True)
     p_ov.add_argument("--resolved-title", required=True)
     p_ov.add_argument("--notes-prefix", default=None)
+    p_ov.add_argument("--per-hand", action="store_true",
+                      help="Hevy template loads two implements while the TC "
+                           "title is neutral (e.g. Step Up → Dumbbell Step "
+                           "Up). Doubles per-hand plan weights on the way "
+                           "into Hevy.")
 
     p_pa = sub.add_parser("record-pending",
                           help="Append/update a pending-approval entry")
@@ -914,6 +928,7 @@ def main(argv: list[str]) -> int:
         entry = add_override(
             args.tc_title, args.template_id, args.resolved_title,
             notes_prefix=args.notes_prefix,
+            per_hand=args.per_hand,
         )
         print(json.dumps(entry, indent=2))
         return 0

@@ -40,6 +40,13 @@ environment, fall back to the legacy Claude-in-Chrome flow (see
 "Fallback: Claude in Chrome" at the end of this file) and say so in the
 Step 6 log line.
 
+> **Check first, don't assume.** As of 2026-08-21 the scheduled-task
+> environment ships `mcp__claude-in-chrome__*` and NOT
+> `mcp__Claude_Browser__*`, so in practice the fallback path is the
+> normal path. Look at the actual tool list at the start of the run
+> rather than reaching for `mcp__Claude_Browser__*` and waiting for it
+> to fail.
+
 - **Hevy API**: header `api-key: <HEVY_API_KEY>`. The literal value is
   not stored in this repo — load it at task-dispatch time from the local
   `.env` file (`HEVY_API_KEY=...`, gitignored). Sandbox networking is
@@ -227,6 +234,24 @@ A workout with a coach note shows a line like `CO Cillian O'Connor a
 day ago` followed by the note body underneath the exercise list.
 A workout with no such line has **no note yet**.
 
+Click it like this — **match on `textContent`, not `innerText`**. The
+label is inside an sr-only span, so `innerText` is empty on these
+buttons and any `innerText`-based lookup silently finds nothing:
+
+```js
+const past = [...document.querySelectorAll('button[role="tab"]')]
+  .find(b => (b.textContent || '').trim().toLowerCase().startsWith('past'));
+past.click();
+await new Promise(r => setTimeout(r, 3000));
+```
+
+Then map cards to ids with
+`[...document.querySelectorAll('a[href*="/client/workouts/"]')]` — the
+hrefs come back in display order, so the first is the most recent
+completed workout. To grab one card's note, walk up from its anchor to
+the nearest ancestor whose `innerText` contains both the coach name and
+the first exercise title.
+
 Collect work for this run:
 - Every entry in `feedback_pending`.
 - If `needs_bootstrap == true`: also the **last 25** completed workouts
@@ -378,6 +403,36 @@ input as a fallback, but a properly line-broken `\n`-delimited plan
 gives the highest-fidelity parse (correct warmup/working split,
 progression detection, notes capture).
 
+**TC edit-page DOM (verified 2026-08-21).** The whole extraction is one
+selector triple — no screenshots or coordinate clicking needed:
+
+| What | Selector |
+|---|---|
+| Exercise card (one per slot, in order) | `li.workoutDisplay-exercise` |
+| Position code (`A`, `C1`, …) | `.exercisePrefix` (within the card) |
+| Exercise title | `h4[data-test="workout-item-title"]` |
+| Plan text | `p.til` |
+| Results box | `textarea` (exactly one per card) |
+| Completed toggle | `button.exerciseStatus` |
+| Save | the `button` whose text is `Update results` |
+
+```js
+[...document.querySelectorAll('li.workoutDisplay-exercise')].map(li => ({
+  position: (li.querySelector('.exercisePrefix')?.innerText || '').trim(),
+  title:    (li.querySelector('h4[data-test="workout-item-title"]')?.innerText || '').trim(),
+  plan:     (li.querySelector('p.til')?.innerText || '')
+              .split('\n').map(s => s.replace(/\s+$/, '')).join('\n').trim(),
+}))
+```
+
+Note the page has **7** textareas but only 6 exercise cards on a
+six-exercise workout — there's a workout-level one too. Always scope the
+textarea lookup to the `li`, never index into a flat `document`-wide
+`querySelectorAll('textarea')`.
+
+Give the SPA ~3s after `navigate` before querying; it renders empty
+otherwise (and `get_page_text` returns "No text content found").
+
 Write `tc_upcoming.json`:
 ```json
 { "workouts": [ {
@@ -452,16 +507,27 @@ Collect outcomes into `/tmp/sync-run-<iso>/results.json`:
 ```json
 {
   "forward":             [ { "hevy_workout_id", "status": "ok|error",
-                             "tc_workout_id", "mode": "ui", "error"? } ],
+                             "tc_workout_id", "date", "mode": "ui", "error"? } ],
   "forward_auto_synced": [ <copy of plan bucket verbatim> ],
   "reverse":             [ { "day_name", "status": "ok|skipped|error",
                              "tc_content_hash", "payload_hash",
                              "routine_id"?,    // present when POST created a new one
+                             "repurposed_from"?,  // copy from the plan item — see below
                              "error"? } ],
   "reverse_tombstones":  [ { "day_name"?, "routine_id",
                               "status": "ok|error", "error"? } ]
 }
 ```
+
+**Copy `repurposed_from` through from the plan item verbatim** whenever
+the planner set it. `commit()` reads it off the *result*, not the plan, and
+uses it to `pop()` the old day out of `cache.day_routines` and
+`cache.reverse`. Drop it and the cache keeps a stale entry pointing the
+old day at a routine that has since been renamed — e.g. after Friday's
+slot was renamed to Monday, `day_routines` held BOTH `Friday` and
+`Monday` mapped to the same id, which would have let a later run
+tombstone a live routine. (Hit on 2026-08-21; fixed by re-running
+`commit` with the field present.)
 
 ### FORWARD (Hevy → TC) — UI
 
@@ -485,25 +551,45 @@ only the most recent Hevy workout is considered).
 
    Then handle the Completed toggle. Read its class list, then follow
    exactly one of these branches:
-   - **Toggle already indicates completed (class contains "complete")
-     AND you modified the textarea** → you MUST **re-touch the toggle**
-     (one programmatic `button.exerciseStatus` `.click()`; it flips to
-     `is-saving` and re-asserts `is-completed`). This is not optional —
-     see the persistence quirk below. Do NOT "leave it alone": TrueCoach
-     only saves exercises it considers dirty, and a text-only edit on an
+   **The toggle is a 3-state CYCLE, not a switch.** Each `.click()`
+   advances one step and wraps around:
+
+   ```
+   is-pending → is-completed → is-missed → is-pending → …
+   ```
+
+   (Observed 2026-08-21; a row can also start at `is-missed`.) So a click
+   never "re-asserts" the current state — it always moves you off it.
+   Both branches below therefore end with the same loop: **click, re-read
+   the class list, repeat until `is-completed`.** Allow up to **4 clicks**
+   (one full cycle plus one), sleeping ~1.5s between clicks so the state
+   settles.
+
+   - **Toggle already completed AND you modified the textarea** → you
+     MUST still **re-touch it**. This is not optional — see the
+     persistence quirk below. Do NOT "leave it alone": TrueCoach only
+     saves exercises it considers dirty, and a text-only edit on an
      already-completed exercise is NOT dirty, so without the re-touch
      your appended text silently fails to persist. This is exactly the
      rows where Mark left a manual note and completed the exercise
      himself — the highest-risk case.
+
+     The first click marks the row dirty but also moves it to
+     `is-missed`. **You are not done.** Keep clicking round the cycle
+     until it reads `is-completed` again, or you will leave Mark's
+     completed exercises marked as missed. (Earlier versions of this
+     runbook claimed the click flipped to `is-saving` and returned to
+     `is-completed` on its own. It does not.)
    - **Toggle already completed AND textarea untouched** → do nothing.
-   - **Toggle not completed** → click it, re-read the class list, and
-     repeat — up to **a maximum of 3 clicks** total. The toggle may
-     cycle through intermediate states (`is-pending` → `is-saved` →
-     `is-completed`) so one click isn't always enough. If after 3
-     clicks the class still doesn't indicate completed → log an error
-     for that exercise (`status: error`, error: "couldn't advance
-     toggle to Completed") and continue. (Rows advanced this way save
+     Don't click a row you didn't edit — you'd knock it off Completed
+     for no reason.
+   - **Toggle not completed** (`is-pending` / `is-missed`) → run the
+     same click-until-`is-completed` loop. (Rows advanced this way save
      their text fine as a side effect — no extra re-touch needed.)
+
+   If after 4 clicks the class still isn't `is-completed` → log an error
+   for that exercise (`status: error`, error: "couldn't advance toggle to
+   Completed") and continue.
 
    The toggle class is read ONLY to know which branch applies and when
    to stop clicking — never as a skip signal.
@@ -746,8 +832,9 @@ Built-in browser: close every extra tab you created during this run
 (`tabs_close`). The main tab can't be closed — leave it on the TC
 workouts page or `about:blank`.
 
-(Chrome fallback only: also close the **tab group** the extension
-created — see the fallback section below.)
+(Chrome fallback only: also tidy the **tab group** the extension
+created — but only close tabs you opened yourself; see the fallback
+section below.)
 
 ## Guardrails
 
@@ -763,6 +850,30 @@ created — see the fallback section below.)
   `.tc_session.json` cookie bootstrap or Chrome's existing logged-in
   session; if both are unavailable, abort and report.
 
+## Known-good behaviours — do NOT report these as bugs
+
+Things that look wrong at a glance but are deliberate. Check here before
+flagging a parser oddity in the Step 6 log.
+
+- **`112.5 kg × 1+` → 12 reps.** A `+` suffix on a working set is an
+  AMRAP marker. Mark wants it rendered as a 12-rep target so the Hevy UI
+  shows a sensible goal rather than a literal single. Confirmed
+  2026-08-21; locked in by
+  `test_amrap_plus_still_maps_to_twelve_reps`. Warmup rep *ranges* take
+  the LOW end and working ranges take the HIGH end — also deliberate.
+- **`27 total` on the first line of a bodyweight block.** Chin-ups,
+  push-ups and other all-zero-weight exercises use the accumulate
+  format: sum-of-reps, blank line, then the per-set lines.
+- **`12 . kg` → 12.5kg.** Cillian types the decimal point and drops the
+  5. The parser resolves a dangling decimal point to `.5` rather than
+  failing the line. Confirmed 2026-08-21.
+- **Dumbbell/kettlebell weights differ by a factor of 2 between the two
+  systems.** TC plans are per hand; Hevy stores the two-hand total. The
+  forward path halves, the reverse path doubles. If a mapping sends a
+  neutrally-named TC exercise to a two-implement Hevy template (e.g.
+  "Step Up" → "Dumbbell Step Up"), the override carries
+  `"per_hand": true` to keep the round-trip symmetric.
+
 ## Fallback: Claude in Chrome (legacy path)
 
 Use when the `mcp__Claude_Browser__*` tools are absent from the run
@@ -774,25 +885,49 @@ TC session is untouched by the cookie-file flow). Partial fallback is
 fine: TC via Chrome while Hevy API calls stay in the built-in browser.
 
 - **Hevy API**: look for an existing Chrome tab at
-  `https://api.hevyapp.com/`; create one if missing. The Chrome MCP's
-  `javascript_tool` does NOT await promises, so extract GET responses
-  with `document.write` + `get_page_text` (base64, blob, and localhost
-  proxies are all blocked):
+  `https://api.hevyapp.com/`; create one if missing. **`javascript_tool`
+  DOES await promises now** (verified 2026-08-21) — top-level `await`
+  works and the last expression is returned, so just write:
 
   ```js
-  fetch('https://api.hevyapp.com/v1/workouts?page=1&pageSize=1',
-        { headers: { 'api-key': '<HEVY_API_KEY>' } })
-    .then(r => r.text())
-    .then(t => { document.open(); document.write('<pre>' + t.replace(/</g,'&lt;') + '</pre>'); document.close(); });
+  const r = await fetch('https://api.hevyapp.com/v1/workouts?page=1&pageSize=1',
+                        { headers: { 'api-key': '<HEVY_API_KEY>' } });
+  JSON.stringify({ status: r.status, body: await r.text() })
   ```
-  Then `get_page_text` on that tab and JSON-parse the `<pre>` contents.
+
+  The old `document.write` + `get_page_text` dance is no longer needed.
+  (Keep it in mind only if a future runtime regresses.)
+
+- **Output is truncated at roughly 1 000 characters per
+  `javascript_tool` call.** The INPUT is not truncated, so this only
+  constrains what you read back. Two consequences:
+  - **Reading big responses**: don't return a whole Hevy workout or
+    routine list. Stash it on `window` (e.g. `window.__S = ...`) and
+    return a compact projection — the fields the Python side actually
+    needs — then reconstruct the object in the sandbox. For
+    `hevy_snapshot.json` only `workouts[0].raw` is ever read by the
+    planner, and `translate_workout` only touches per-exercise `title`,
+    `notes`, `equipment` and each set's `type`/`weight_kg`/`reps`/`rpe`.
+    Everything else can be dropped. The rest of the workouts need only
+    `id` + `date`.
+  - **Full ids**: never return a truncated/abbreviated id "to save
+    space" — you'll have to re-fetch. Return them in a compact
+    newline-joined string instead of pretty JSON.
+
+- **Writing big payloads**: to PUT/POST a routine, paste the payload
+  into the JS source as an object literal (`const body = {…};`) and
+  `JSON.stringify(body)` in the fetch. JSON is valid JS, so this is a
+  straight copy-paste from the generated `put_payloads.json` — do NOT
+  wrap it in a template literal and `JSON.parse` it, because the `\n`
+  escapes inside notes strings get expanded to real newlines first and
+  `JSON.parse` then fails on them.
 
 - **TrueCoach**: `https://app.truecoach.co/` — already logged in.
 
-- **Cleanup**: close every tab you opened AND the tab group the
-  extension created for them — closing the tabs alone leaves an empty
-  group header in the tab strip. Ungroup or close the group after the
-  tabs are gone (e.g. `tabs_close_mcp` with the group's tab IDs, then
-  remove the group itself, or a shortcut to close the group). If you
-  can't find a programmatic way, at least ungroup the tabs before
-  closing them.
+- **Cleanup**: close every tab you opened. Then deal with the tab group:
+  closing the tabs alone can leave an empty group header in the tab
+  strip. **But check the group's tab list first** — `tabs_context_mcp`
+  can report tabs that Mark opened himself sitting in the same group
+  (seen 2026-08-21). Close only the tabs you created; never close the
+  group wholesale if it still contains a tab you didn't open. Leaving a
+  tidy group header behind is much cheaper than closing Mark's tabs.

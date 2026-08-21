@@ -24,7 +24,9 @@ Conventions (confirmed by Mark 2026-04-22):
   - Weight:
       * explicit in set line (e.g. "35kg × 5", "5 x 5 @ 60kg") → use it
       * "Start at/with N kg" hint nearby for a templated set → use it
-      * dumbbell exercise + "each hand" → DOUBLE to get Hevy total weight
+      * dumbbell/kettlebell exercise + "each hand" → DOUBLE to get Hevy
+        total weight (both implements are logged per-hand in TC, total
+        in Hevy)
       * otherwise 0
   - RPE/RIR guidance and "Start at…", "Progress by…", "each arm" qualifiers
     are preserved verbatim in exercise notes — but section headings and
@@ -60,13 +62,27 @@ from typing import Optional
 _WARMUP_HEADING = re.compile(r"^\s*warm[\s\-]?ups?\s*:?\s*$", re.IGNORECASE)
 _WORKING_HEADING = re.compile(r"^\s*work(?:ing)?(?:\s+sets?)?\s*:?\s*$", re.IGNORECASE)
 
+# Weight number token.
+#
+# Cillian half-writes half-kg increments: he types the decimal point but
+# drops the digit after it, giving "12 . kg", "12. kg" or "12.kg" where he
+# meant 12.5kg. Before this was handled the trailing dot broke the match and
+# the whole set line was silently dropped from the parse. We accept the
+# dangling dot here and `_parse_weight_token` resolves it to `.5`
+# (Mark, 2026-08-21 — confirmed that's always the intent).
+#
+# The optional spaces are `[ \t]` and NOT `\s`, deliberately: `\s` matches
+# newlines, which would let a weight token run off the end of its line and
+# swallow the start of the next plan line.
+_WEIGHT_NUM = r"\d+(?:[ \t]{0,2}\.[ \t]{0,2}\d*)?"
+
 # Individual-set line prefix:  weight  ×  reps
 #   Matches from start of line; caller uses .end() to get trailing text.
 #   AMRAP marker `+` may have whitespace before it ("5 +" as well as "5+").
 _INDIV_SET_RE = re.compile(
     r"""
     ^\s*
-    (?P<weight>bar|\d+(?:\.\d+)?)\s*(?P<kg>kg)?
+    (?P<weight>bar|""" + _WEIGHT_NUM + r""")[ \t]*(?P<kg>kg)?
     \s*[x×]\s*
     (?P<reps_lo>\d+)(?:\s*-\s*(?P<reps_hi>\d+))?
     \s*(?P<amrap>\+)?
@@ -82,7 +98,7 @@ _TEMPLATE_SET_RE = re.compile(
     \s*[x×]\s*
     (?P<reps_lo>\d+)(?:\s*-\s*(?P<reps_hi>\d+))?
     \s*\+?\s*(?:reps?)?
-    (?:\s*@\s*(?P<weight>\d+(?:\.\d+)?)\s*kg)?
+    (?:\s*@\s*(?P<weight>""" + _WEIGHT_NUM + r""")\s*kg)?
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -99,13 +115,14 @@ _INLINE_HEADING_RE = re.compile(
 # starting weight bare ("Start 12.5kg"). Word boundary on `start` keeps
 # "Restart" / "starting" from matching.
 _WEIGHT_HINT_RE = re.compile(
-    r"(?:\bstart(?:\s+(?:at|with))?\s+|@\s*)(\d+(?:\.\d+)?)\s*kg",
+    r"(?:\bstart(?:\s+(?:at|with))?\s+|@\s*)(" + _WEIGHT_NUM + r")[ \t]*kg",
     re.IGNORECASE,
 )
 
 # "Progress by 2.5kg" / "Progress by 2.5-5kg" / "progress by 2-2.5kg per hand"
 _PROGRESS_RE = re.compile(
-    r"\bprogress\s+by\s+(\d+(?:\.\d+)?)(?:\s*-\s*(\d+(?:\.\d+)?))?\s*kg",
+    r"\bprogress\s+by\s+(" + _WEIGHT_NUM + r")"
+    r"(?:[ \t]*-[ \t]*(" + _WEIGHT_NUM + r"))?[ \t]*kg",
     re.IGNORECASE,
 )
 
@@ -203,6 +220,9 @@ _BIG_LIFT_RE = re.compile(
 
 _DUMBBELL_MARKERS = (
     "dumbbell", "db)", "(db)", "per hand", "each hand", "per arm", "each arm",
+    # Kettlebells follow the same convention: TC plans are per-hand,
+    # Hevy logs the total across both hands.
+    "kettlebell", "kb)", "(kb)",
 )
 
 
@@ -246,12 +266,22 @@ def is_dumbbell(title: str, plan_text: str = "") -> bool:
     return any(m in blob for m in _DUMBBELL_MARKERS)
 
 
-def _parse_weight_token(w_raw: str, has_kg: bool) -> float:
+def _parse_weight_token(w_raw: str, has_kg: bool = True) -> float:
+    """Turn a matched weight token into kilograms.
+
+    Handles Cillian's dangling-decimal typo: "12 ." / "12." / "12 . " all
+    mean 12.5kg (he types the point and drops the 5). Anything else parses
+    normally. `bar` is the empty 20kg olympic bar.
+    """
     if w_raw is None:
         return 0.0
-    if w_raw.lower() == "bar":
+    tok = re.sub(r"[ \t]+", "", w_raw)
+    if tok.lower() == "bar":
         return 20.0
-    return float(w_raw)
+    if tok.endswith("."):
+        # Dangling decimal point → the dropped digit is always a 5.
+        return float(tok[:-1]) + 0.5
+    return float(tok)
 
 
 def _maybe_double(weight_kg: float, title: str, plan_text: str) -> float:
@@ -303,7 +333,7 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
     fallback_hint = None
     m_global = _WEIGHT_HINT_RE.search(plan_text)
     if m_global:
-        fallback_hint_raw = float(m_global.group(1))
+        fallback_hint_raw = _parse_weight_token(m_global.group(1))
         # Decide doubling based on the full plan context.
         fallback_hint = fallback_hint_raw * 2 if is_dumbbell(title, plan_text) else fallback_hint_raw
 
@@ -315,7 +345,9 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
     progress_step = None
     m_prog = _PROGRESS_RE.search(plan_text)
     if m_prog and _BIG_LIFT_RE.search(title):
-        step_raw = float(m_prog.group(2) if m_prog.group(2) is not None else m_prog.group(1))
+        step_raw = _parse_weight_token(
+            m_prog.group(2) if m_prog.group(2) is not None else m_prog.group(1)
+        )
         progress_step = step_raw * 2 if is_dumbbell(title, plan_text) else step_raw
 
     for line in lines:
@@ -371,7 +403,7 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
         # Explicit weight hint that is NOT also a set ("Start at 45kg")
         m_hint = _WEIGHT_HINT_RE.search(line)
         if m_hint and not _INDIV_SET_RE.match(line) and not _TEMPLATE_SET_RE.match(line):
-            raw_weight = float(m_hint.group(1))
+            raw_weight = _parse_weight_token(m_hint.group(1))
             if is_dumbbell(title, line) or is_dumbbell(title, plan_text):
                 pending_weight_hint = raw_weight * 2
             else:
@@ -436,13 +468,15 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
                 return False
             w = (m.group("weight") or "")
             kg = m.group("kg")
-            if w.lower() == "bar":
+            if w.strip().lower() == "bar":
                 return True
             if kg is not None:
                 return True
             # No kg suffix: decide by magnitude or by section context.
+            # `_parse_weight_token` (not bare float) so a dangling-decimal
+            # typo like "12 . x 5" is still recognised as a weight.
             try:
-                val = float(w)
+                val = _parse_weight_token(w)
             except ValueError:
                 return False
             if "." in w:
@@ -497,7 +531,8 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
             reps = _high_end(m_tmpl.group("reps_lo"), m_tmpl.group("reps_hi"))
             weight_raw = m_tmpl.group("weight")
             if weight_raw:
-                base = _maybe_double(float(weight_raw), title, plan_text)
+                base = _maybe_double(_parse_weight_token(weight_raw),
+                                     title, plan_text)
             elif pending_weight_hint is not None:
                 base = pending_weight_hint
             elif fallback_hint is not None:
@@ -594,7 +629,10 @@ class ExerciseResolver:
         self.templates = list(templates)
         # Approved manual overrides — keyed by normalised TC title.
         # Each value: {"exercise_template_id", "resolved_title",
-        #              "notes_prefix"?, "approved_at"?}
+        #              "notes_prefix"?, "per_hand"?, "approved_at"?}
+        # `per_hand`: the Hevy template loads two implements (dumbbells /
+        # kettlebells) but the TC title doesn't say so, so plan weights are
+        # per hand and must be doubled — see `_apply_per_hand_override`.
         self.overrides: dict = dict(overrides or {})
         self._hist_by_norm: dict = {}
         self._hist_by_tokens: dict = {}
@@ -876,6 +914,31 @@ def _sets_payload_with_fallback(parsed) -> list:
     return out
 
 
+def _apply_per_hand_override(override: dict, parsed, title: str,
+                             plan_text: Optional[str]) -> None:
+    """Double working-set weights for an override flagged `per_hand`.
+
+    Why this exists: Hevy records dumbbell/kettlebell work as the TOTAL
+    across both hands, while TrueCoach plans are written per hand. The
+    normal detection (`is_dumbbell`) reads the TC *title* and plan text, so
+    it can't see that an override redirects a neutrally-named TC exercise
+    onto a two-implement Hevy template — e.g. TC "Step Up" → Hevy "Dumbbell
+    Step Up". Without this, weights round-trip lossily: Hevy→TC halves on
+    the way out but TC→Hevy never doubled on the way back in.
+
+    Only working sets are scaled, mirroring `_maybe_double`, which leaves
+    warmups alone. No-ops when the plan text already made `is_dumbbell`
+    true, so a plan saying "each hand" can't get doubled twice.
+    """
+    if not override.get("per_hand"):
+        return
+    if is_dumbbell(title, plan_text or ""):
+        return  # already doubled during parsing
+    for s in parsed.working_sets:
+        if s.weight_kg:
+            s.weight_kg *= 2
+
+
 def build_hevy_exercise(
     title: str,
     plan_text: Optional[str],
@@ -909,6 +972,7 @@ def build_hevy_exercise(
         prefix = override.get("notes_prefix")
         if prefix:
             parsed.notes = (prefix + "\n" + parsed.notes).strip()
+        _apply_per_hand_override(override, parsed, title, plan_text)
         sets_payload = _sets_payload_with_fallback(parsed)
         return {
             "tc_title": title,

@@ -16,9 +16,10 @@ Rules (from Mark, 2026-04-21, rev3):
   - RPE → RIR:
       * Integer RPE → single-integer RIR  (RPE 7 → "rir 3")
       * Half-step RPE → integer RANGE     (RPE 6.5 → "rir 3-4")
-  - Dumbbell exercises: Hevy logs TOTAL weight (both hands combined);
-    TrueCoach wants PER-HAND weight. Halve it.
-    Dumbbell detected by equipment == "dumbbell" OR "(Dumbbell)" in title.
+  - Dumbbell/kettlebell exercises: Hevy logs TOTAL weight (both hands
+    combined); TrueCoach wants PER-HAND weight. Halve it.
+    Detected by equipment in {dumbbell, kettlebell} OR "dumbbell"/
+    "kettlebell" in the title (e.g. "Kettlebell Shoulder Press").
   - Format per set:
         "45kg x 10, rir 3-4"          (with weight + rpe)
         "45kg x 10"                   (with weight, no rpe)
@@ -31,7 +32,8 @@ from typing import Optional, Iterable
 import re
 
 
-DUMBBELL_EQUIPMENT = {"dumbbell", "dumbells", "dumbbells"}
+DUMBBELL_EQUIPMENT = {"dumbbell", "dumbells", "dumbbells",
+                      "kettlebell", "kettlebells"}
 # Fallback only — used when no TrueCoach plan text is supplied.
 WORKING_RPE_THRESHOLD = 7.0
 
@@ -47,7 +49,10 @@ WORKING_RPE_THRESHOLD = 7.0
 # doesn't partially eat into neighbouring content like "45kg 4-5 x 10-12".
 _WARMUP_SET_TOKEN = re.compile(
     r"""
-    (?:bar|\d+(?:\.\d+)?\s*(?:kg)?)   # "Bar" or a single weight (decimal ok, "kg" optional)
+    # "Bar" or a single weight ("kg" optional). The decimal part tolerates a
+    # dangling point with the digit missing — Cillian's "12 . kg" typo for
+    # 12.5kg — and uses [ \t] rather than \s so it can't span a line break.
+    (?:bar|\d+(?:[ \t]{0,2}\.[ \t]{0,2}\d*)?[ \t]*(?:kg)?)
     \s*[x×]\s*                         # the multiplication mark
     \d+(?:-\d+)?\+?                    # reps: single, range, or "1+" (AMRAP)
     """,
@@ -69,12 +74,15 @@ class ExerciseBlock:
 
 
 def _is_dumbbell(exercise: dict) -> bool:
+    """True for per-hand implements (dumbbell OR kettlebell): Hevy logs
+    the total across both hands, TrueCoach wants per-hand, so halve."""
     eq = (exercise.get("equipment") or "").strip().lower()
     if eq in DUMBBELL_EQUIPMENT:
         return True
     title = (exercise.get("title") or "").lower()
-    # Hevy's naming convention: "Bicep Curl (Dumbbell)", "Dumbbell Row", etc.
-    return "dumbbell" in title
+    # Hevy's naming convention: "Bicep Curl (Dumbbell)", "Dumbbell Row",
+    # "Kettlebell Shoulder Press", etc.
+    return "dumbbell" in title or "kettlebell" in title
 
 
 def _format_weight(kg: float) -> str:

@@ -455,6 +455,12 @@ def test_is_dumbbell_by_plan_text():
     assert is_dumbbell("Row", "use DBs, each arm")
 
 
+def test_is_dumbbell_kettlebell_title():
+    # Kettlebells share the per-hand convention with dumbbells.
+    assert is_dumbbell("One Arm Kettlebell Press", "")
+    assert is_dumbbell("Kettlebell Swing", "3 x 10")
+
+
 def test_is_dumbbell_barbell_false():
     assert not is_dumbbell("Bench Press (Barbell)", "5 x 5 @ 60kg")
 
@@ -960,6 +966,157 @@ def test_build_hevy_chinup_bodyweight_total_reps_full_pipeline():
     assert out["sets"][0]["reps"] == 20
     # No placeholder warning — we actually parsed a real set.
     assert not any("placeholder" in w.lower() for w in out["warnings"])
+
+
+# ---------------------------------------------------------------------------
+# Dangling-decimal typo — Cillian types the point but drops the 5
+# ("12 . kg" means 12.5kg). Before this was handled the whole set line
+# failed to match and was silently dropped. (Mark, 2026-08-21)
+# ---------------------------------------------------------------------------
+
+def test_dangling_decimal_indiv_set_spaced():
+    p = parse_plan("Bench Press", "12 . kg x 8")
+    assert [s.weight_kg for s in p.working_sets] == [12.5]
+
+
+def test_dangling_decimal_indiv_set_variants_all_agree():
+    for text in ("12. kg x 8", "12.kg x 8", "12 .kg x 8", "12 . kg x 8"):
+        p = parse_plan("Bench Press", text)
+        assert [s.weight_kg for s in p.working_sets] == [12.5], text
+
+
+def test_dangling_decimal_in_start_hint():
+    p = parse_plan("Row", "Start with 22 . kg\n4 x 8-10")
+    assert len(p.working_sets) == 4
+    assert all(s.weight_kg == 22.5 for s in p.working_sets)
+
+
+def test_dangling_decimal_in_template_at_weight():
+    p = parse_plan("Press", "4 x 10 @ 17 . kg")
+    assert [s.weight_kg for s in p.working_sets] == [17.5] * 4
+
+
+def test_dangling_decimal_in_progress_by():
+    # Progression is gated on big barbell lifts, so use Squat.
+    p = parse_plan("Squat", "Start at 60kg\n3 x 5\nProgress by 2 . kg")
+    assert [s.weight_kg for s in p.working_sets] == [60.0, 62.5, 65.0]
+
+
+def test_dangling_decimal_warmup_keeps_warmup_type():
+    # NB: a blank line alone does not close a warmup section — it takes a
+    # "Working sets" heading (or a template line). Same shape as the real
+    # TC deadlift plans.
+    p = parse_plan("Bench Press",
+                   "Warm-up\n12 . kg x 10\n\nWorking sets\n60kg x 5")
+    assert [s.weight_kg for s in p.warmup_sets] == [12.5]
+    assert p.warmup_sets[0].type == "warmup"
+    assert [s.weight_kg for s in p.working_sets] == [60.0]
+
+
+def test_ordinary_decimals_unaffected():
+    p = parse_plan("Deadlift", "102.5kg x 3")
+    assert [s.weight_kg for s in p.working_sets] == [102.5]
+
+
+def test_integer_weights_unaffected():
+    p = parse_plan("Deadlift", "100kg x 3")
+    assert [s.weight_kg for s in p.working_sets] == [100.0]
+
+
+def test_weight_token_cannot_span_a_newline():
+    """Regression guard: the optional-space allowance around the decimal
+    point is [ \\t], never \\s. With \\s a weight at the end of one line
+    could swallow the start of the next."""
+    import re
+    from truecoach_to_hevy import _WEIGHT_NUM
+    m = re.match(_WEIGHT_NUM, "12\n.5")
+    assert m is not None and m.group(0) == "12"
+
+
+def test_dangling_decimal_does_not_eat_following_sentence():
+    p = parse_plan("Row", "20kg x 10. Then rest 2 mins")
+    assert [s.weight_kg for s in p.working_sets] == [20.0]
+    assert "Then rest 2 mins" in p.notes
+
+
+def test_amrap_plus_still_maps_to_twelve_reps():
+    """Deliberate, not a bug: Mark wants a '+' working set to show a
+    sensible 12-rep goal in the Hevy UI. Locked in so it doesn't get
+    'fixed' by a future reader. (Confirmed 2026-08-21.)"""
+    p = parse_plan("Deadlift", "Work sets\n112.5 kg x 1+")
+    assert [s.reps for s in p.working_sets] == [12]
+
+
+# ---------------------------------------------------------------------------
+# per_hand overrides — TC plans are per hand, Hevy stores the two-hand total
+# ---------------------------------------------------------------------------
+
+def _per_hand_resolver(per_hand=True):
+    overrides = {
+        "step up": {
+            "exercise_template_id": "BF6ECE89",
+            "resolved_title": "Dumbbell Step Up",
+            "notes_prefix": None,
+            "per_hand": per_hand,
+        }
+    }
+    return ExerciseResolver([], [], overrides=overrides)
+
+
+def test_per_hand_override_doubles_working_weights():
+    from truecoach_to_hevy import build_hevy_exercise
+    out = build_hevy_exercise("Step Up", "Start with 15kg\n3 x 8-12",
+                              _per_hand_resolver())
+    assert out["exercise_template_id"] == "BF6ECE89"
+    assert [s["weight_kg"] for s in out["sets"]] == [30.0] * 3
+
+
+def test_per_hand_override_does_not_double_twice():
+    """Plan already says 'each hand', so parse_plan doubled it. The
+    override must not double it again."""
+    from truecoach_to_hevy import build_hevy_exercise
+    out = build_hevy_exercise("Step Up",
+                              "Start with 15kg each hand\n3 x 8-12",
+                              _per_hand_resolver())
+    assert [s["weight_kg"] for s in out["sets"]] == [30.0] * 3
+
+
+def test_per_hand_override_leaves_bodyweight_alone():
+    from truecoach_to_hevy import build_hevy_exercise
+    out = build_hevy_exercise("Step Up", "3 x 8-12\nRIR 2",
+                              _per_hand_resolver())
+    assert [s["weight_kg"] for s in out["sets"]] == [0.0] * 3
+
+
+def test_per_hand_override_leaves_warmups_alone():
+    """Mirrors _maybe_double, which only scales working sets."""
+    from truecoach_to_hevy import build_hevy_exercise
+    out = build_hevy_exercise(
+        "Step Up", "Warm-up\n10kg x 10\n\nWorking sets\n3 x 8 @ 15kg",
+        _per_hand_resolver())
+    weights = [s["weight_kg"] for s in out["sets"]]
+    assert weights[0] == 10.0          # warmup untouched
+    assert weights[1:] == [30.0] * 3   # working sets doubled
+
+
+def test_override_without_per_hand_flag_does_not_double():
+    """Back-compat: the pre-existing overrides have no per_hand key."""
+    from truecoach_to_hevy import build_hevy_exercise
+    r = ExerciseResolver([], [], overrides={
+        "step up": {
+            "exercise_template_id": "BF6ECE89",
+            "resolved_title": "Dumbbell Step Up",
+        }
+    })
+    out = build_hevy_exercise("Step Up", "Start with 15kg\n3 x 8-12", r)
+    assert [s["weight_kg"] for s in out["sets"]] == [15.0] * 3
+
+
+def test_per_hand_false_does_not_double():
+    from truecoach_to_hevy import build_hevy_exercise
+    out = build_hevy_exercise("Step Up", "Start with 15kg\n3 x 8-12",
+                              _per_hand_resolver(per_hand=False))
+    assert [s["weight_kg"] for s in out["sets"]] == [15.0] * 3
 
 
 # ---------------------------------------------------------------------------
