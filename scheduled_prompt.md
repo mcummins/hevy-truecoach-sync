@@ -40,12 +40,22 @@ environment, fall back to the legacy Claude-in-Chrome flow (see
 "Fallback: Claude in Chrome" at the end of this file) and say so in the
 Step 6 log line.
 
-> **Check first, don't assume.** As of 2026-08-21 the scheduled-task
-> environment ships `mcp__claude-in-chrome__*` and NOT
-> `mcp__Claude_Browser__*`, so in practice the fallback path is the
-> normal path. Look at the actual tool list at the start of the run
-> rather than reaching for `mcp__Claude_Browser__*` and waiting for it
-> to fail.
+> **Check first, don't assume.** Verified 2026-08-31: the scheduled-task
+> environment now ships `mcp__Claude_Browser__*`, and the whole run
+> (Hevy API + TC cookie bootstrap + TC edit-page DOM + Past tab) works
+> on it. That is the primary path again. Between 2026-08-21 and
+> 2026-08-31 only `mcp__claude-in-chrome__*` was present, so if you find
+> the built-in tools missing, the Chrome fallback is still fully
+> maintained — look at the actual tool list at the start of the run
+> rather than assuming either way.
+>
+> **The built-in browser does not truncate `javascript_exec` output.**
+> An 18 KB response came back whole (2026-08-31). The ~1 000-char cap
+> described in the Chrome fallback section does NOT apply here, so on
+> this path do **not** hand-rebuild API objects from chunked
+> projections — fetch, and pass the parsed object straight through. That
+> chunking workaround is what produced the guessed-`equipment` bug on
+> 2026-08-24 (see Step 2a).
 
 - **Hevy API**: header `api-key: <HEVY_API_KEY>`. The literal value is
   not stored in this repo — load it at task-dispatch time from the local
@@ -68,7 +78,32 @@ Step 6 log line.
 
   1. Navigate a tab to `https://app.truecoach.co/` (landing on the
      login page is expected).
-  2. Read the file; for each entry in `cookies`, set
+  2. **Expire any existing `ember_simple_auth-*` cookies first**, then
+     set the ones from the file.
+
+     The built-in browser keeps a persistent profile across sessions, so
+     a previous visit can leave a *logged-out* session cookie behind
+     (`ember_simple_auth-session={"authenticated":{}}`). Because that
+     cookie may be scoped to a different path or domain, a plain
+     `document.cookie = 'ember_simple_auth-session=...'` **adds a second
+     cookie rather than replacing it**, and TC keeps reading the empty
+     one — you stay on the login page and would wrongly conclude the
+     token was revoked. Hit on 2026-08-31.
+
+     Clear across every plausible scope, then set:
+
+     ```js
+     const names = ['ember_simple_auth-session',
+                    'ember_simple_auth-session-expiration_time'];
+     for (const n of names)
+       for (const p of ['/', '/login', '/client'])
+         for (const d of ['', '.truecoach.co', 'app.truecoach.co'])
+           document.cookie = n + '=; path=' + p + (d ? '; domain=' + d : '') +
+                             '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+     ```
+
+     Confirm `document.cookie` has no `ember_simple_auth` entries left
+     before setting the new ones. Then, for each entry in `cookies`, set
      `document.cookie = '<name>=<value>; path=/; max-age=33177600; secure; samesite=lax'`.
      Values are stored in raw URI-encoded `document.cookie` form — set
      them exactly as-is, do not decode or re-encode.
@@ -234,6 +269,32 @@ A workout with a coach note shows a line like `CO Cillian O'Connor a
 day ago` followed by the note body underneath the exercise list.
 A workout with no such line has **no note yet**.
 
+> **Check the author. Mark's own notes look identical.** Mark comments
+> on his own workouts, and a client note renders in exactly the same
+> place and shape as a coach note — only the name differs (`Mark
+> Cummins 4 hours ago` vs `CO Cillian O'Connor a day ago`). Observed
+> 2026-08-31 on workout `615171617`, whose only note was Mark's: *"Just
+> FYI I'll be doing all my sessions in FlyeFit in Stillorgan from now
+> on, so more equipment available."* Classifying that as coach feedback
+> would have stamped a bogus `Coach Tip:` onto six exercises and pushed
+> it into Hevy.
+>
+> So: a note counts as coach feedback **only** when its author line is
+> Cillian's. Anything authored by Mark is client context — never a form
+> tip, never a prescription, regardless of how instructional it sounds.
+> If a card has only Mark's note, that is the **no note yet** case:
+> call `apply-note` with `"note_present": false` so the workout stays
+> in `feedback_pending` for Cillian's eventual review.
+>
+> When a card carries both authors, keep only Cillian's text before
+> classifying. When concatenating multiple notes, filter by author
+> first, then join.
+>
+> Client notes can still matter to Mark for other reasons (the FlyeFit
+> one changes what equipment is available). Don't act on them, but do
+> surface anything that looks like it affects the plan in the Step 6
+> log line so he sees it.
+
 Click it like this — **match on `textContent`, not `innerText`**. The
 label is inside an sr-only span, so `innerText` is empty on these
 buttons and any `innerText`-based lookup silently finds nothing:
@@ -369,6 +430,30 @@ planner can detect "completed days" and tombstone their stale Hevy
 routines automatically. Each `raw` is the whole workout object from
 Hevy. The `date` is the calendar date of `start_time` (UTC is fine).
 
+> **Never invent fields when reconstructing `raw`.** Because the browser
+> transport truncates output, you will normally rebuild `raw` in the
+> sandbox from a projection you read back in chunks (see the fallback
+> section). Copy **only** keys that the API actually returned. If a key
+> `translate_workout` looks at is absent from the API response, leave it
+> absent — do not fill it in from the exercise title, the TC plan, or
+> your own knowledge of the movement.
+>
+> Specifically: **`/v1/workouts` does NOT return `equipment`** (verified
+> 2026-08-24 — it is `undefined` on every exercise). `_is_dumbbell()` in
+> `hevy_to_truecoach.py` falls back to matching `dumbbell`/`kettlebell`
+> in the Hevy exercise **title**, which is the correct behaviour. Adding
+> a guessed `"equipment": "dumbbell"` short-circuits that fallback and
+> silently **halves** the weights pushed into TrueCoach. Hit on
+> 2026-08-24: a guessed `equipment` on `Goblet Squat` turned
+> 22.5/27.5/30/32.5kg into 11.25/13.75/15/16.25kg. Caught before the
+> push only because the halving looked wrong by eye.
+>
+> Sanity check before the forward push: compare the translated weights
+> against the Hevy set weights you read back. Any exercise whose numbers
+> are exactly half should be treated as a bug, not a per-hand
+> conversion, unless its Hevy title actually contains "Dumbbell" or
+> "Kettlebell".
+
 Also determine whether a TC slot exists for the most recent workout's
 date. Open the TC Upcoming page (or filter the client workouts page by
 date) and collect every TC workout on that date. Write `tc_recent.json`:
@@ -414,7 +499,7 @@ selector triple — no screenshots or coordinate clicking needed:
 | Plan text | `p.til` |
 | Results box | `textarea` (exactly one per card) |
 | Completed toggle | `button.exerciseStatus` |
-| Save | the `button` whose text is `Update results` |
+| Save | the `button` whose text is `Update results` **or** `Finish workout` — see below |
 
 ```js
 [...document.querySelectorAll('li.workoutDisplay-exercise')].map(li => ({
@@ -429,6 +514,23 @@ Note the page has **7** textareas but only 6 exercise cards on a
 six-exercise workout — there's a workout-level one too. Always scope the
 textarea lookup to the `li`, never index into a flat `document`-wide
 `querySelectorAll('textarea')`.
+
+**The save button's label depends on workout state.** On a workout with
+every exercise still `is-pending` it reads **`Finish workout`**; once
+exercises have been marked completed it reads **`Update results`**
+(verified 2026-08-31). The forward flow happens to toggle before saving,
+so it sees `Update results` — but never look the button up before the
+toggle step, and never treat a missing `Update results` as "the DOM
+doesn't match". Match either label:
+
+```js
+const save = [...document.querySelectorAll('button')]
+  .find(b => ['update results', 'finish workout']
+               .includes((b.textContent || '').trim().toLowerCase()));
+```
+
+Both submit the same form. Only if *neither* is present should you log
+the workout as a DOM mismatch and skip it per the guardrails.
 
 Give the SPA ~3s after `navigate` before querying; it renders empty
 otherwise (and `get_page_text` returns "No text content found").
@@ -669,6 +771,61 @@ For each `plan.reverse[i]`:
    label) before appending, so re-pushes don't accumulate duplicates
    when the tip changes.
 
+   **Set-count sanity check (prose set counts).** The plan parser reads
+   set counts from a line whose *leading* token is the count — `4 x 8-12`,
+   `5-6 sets x RIR 2`. When Cillian buries the count mid-sentence, the
+   parser doesn't see it and emits a **single placeholder set** with null
+   weight and null reps. This survives `validate-put` (one set, not zero,
+   so nothing is silently dropped) and ships a routine card with one blank
+   set instead of the prescribed five. Hit on 2026-08-24 with
+   `Band Assisted Chins` — plan text
+   `"Use an amount of band tension that allows 5 x 8-12 at RIR 2"`
+   produced 1 set.
+
+   So after building, for each exercise where `len(built["sets"]) <= 1`
+   **and** the single set has null reps, re-read the TC plan text and
+   look for a count expressed in prose. A match for
+   `(\d+)\s*(?:-\s*\d+)?\s*(?:x|×|sets?)\b` that is **not** at the start
+   of a line is exactly the case the parser missed.
+
+   **Fix by re-parsing, not by hand-expanding the sets array.** Hoist the
+   matched fragment onto its own leading line and call
+   `build_hevy_exercise` again on the patched plan text:
+
+   ```python
+   if len(built["sets"]) <= 1 and built["sets"][0].get("reps") is None:
+       m = re.search(r'(\d+\s*(?:-\s*\d+)?\s*(?:x|×)\s*\d+(?:\s*-\s*\d+)?)', plan)
+       if m and not re.match(r'^\s*' + re.escape(m.group(1)), plan):
+           built = build_hevy_exercise(
+               ex["title"], m.group(1) + "\n" + plan, resolver,
+               position_code=ex["position"],
+               superset_id=super_map[ex["position"]],
+               form_tip=tip,
+           )
+   ```
+
+   This routes through the parser's normal path, so warmup/working
+   splits, the rep-range rules (HIGH end for working sets, LOW for
+   warmups) and the bodyweight `weight_kg: 0.0` convention all come out
+   identical to a well-formed plan. Hand-expanding the placeholder
+   instead leaves `weight_kg: null` where the parser would have written
+   `0.0`, producing a payload that differs from the same plan written
+   properly. Verified 2026-08-24: the `Band Assisted Chins` text above
+   goes from 1 null set to 5 × `(0.0, 12)`, and the untouched original
+   prose is still preserved in `notes`.
+
+   Then re-check `len(built["sets"])`. If it's still ≤ 1, leave it — and
+   note it in the Step 6 log line, e.g.
+   `reverse=2 (1 unparsed set count: Friday/Band Assisted Chins)`.
+
+   If the plan genuinely has no set count anywhere (a hold, a "to
+   failure" instruction, a free-text-only slot), leave the single set as
+   is — that's the parser behaving correctly, not a miss.
+
+   The durable fix is in `truecoach_to_hevy.py` (let the set-count
+   matcher fire mid-line, not just line-anchored). Until that lands, the
+   re-parse above is the workaround.
+
    **Confidence gate.** After building, inspect each
    `built["confidence"]`. The accepted ("unambiguous") values are:
    `history`, `catalog-exact`, `approved`, `history-fuzzy-strong`,
@@ -874,12 +1031,22 @@ flagging a parser oddity in the Step 6 log.
   "Step Up" → "Dumbbell Step Up"), the override carries
   `"per_hand": true` to keep the round-trip symmetric.
 
+  **This bullet is not a blanket excuse for halved weights.** It applies
+  only when the Hevy exercise title contains "Dumbbell" or "Kettlebell",
+  or an explicit `per_hand` override is configured. A single-implement
+  movement (goblet squat, landmine press, one-dumbbell suitcase carry)
+  must NOT be halved. If you see halving on one of those, it means a
+  guessed `equipment` field crept into the reconstructed workout — see
+  the boxed warning in Step 2a. That is a bug; report it.
+
 ## Fallback: Claude in Chrome (legacy path)
 
 Use when the `mcp__Claude_Browser__*` tools are absent from the run
 environment, or (TrueCoach side only) when the `.tc_session.json`
-bootstrap lands on the login page. This was the primary path before
-2026-07-17; it rides Mark's real Chrome, where he stays logged into
+bootstrap lands on the login page *after* the expire-then-set step in
+the Access section — a duplicate stale cookie is not a revoked token.
+This was the primary path before 2026-07-17 and again from 2026-08-21
+to 2026-08-31; it rides Mark's real Chrome, where he stays logged into
 TrueCoach — no `.tc_session.json` bootstrap is needed (and Chrome's own
 TC session is untouched by the cookie-file flow). Partial fallback is
 fine: TC via Chrome while Hevy API calls stay in the built-in browser.
@@ -910,6 +1077,15 @@ fine: TC via Chrome while Hevy API calls stay in the built-in browser.
     `notes`, `equipment` and each set's `type`/`weight_kg`/`reps`/`rpe`.
     Everything else can be dropped. The rest of the workouts need only
     `id` + `date`.
+
+    **Project, never reconstruct from memory.** Build the projection in
+    the page with a `.map()` over the real objects and read the result
+    back; don't retype the workout by hand in the sandbox. And note that
+    **`equipment` is not returned by `/v1/workouts`** — it comes back
+    `undefined` on every exercise, so it will simply be missing from the
+    projection. That is correct. Do NOT add it back. See the boxed
+    warning in Step 2a for what a guessed `equipment` does to the
+    forward-sync weights.
   - **Full ids**: never return a truncated/abbreviated id "to save
     space" — you'll have to re-fetch. Return them in a compact
     newline-joined string instead of pretty JSON.
