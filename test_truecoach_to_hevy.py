@@ -73,6 +73,27 @@ def test_sets_only_singular_form():
     assert all(s.reps is None for s in p.working_sets)
 
 
+def test_sets_word_before_x_with_rep_range():
+    """'4 sets x 8-12 reps / RIR 2' — the word 'sets' between the count
+    and the 'x' must not stop the rep range being read. Working sets take
+    the HIGH end of the range. Seen 2026-09-02 on Band Assisted Dip, which
+    shipped 4 placeholder sets with blank reps."""
+    p = parse_plan("Band Assisted Dip", "4 sets x 8-12 reps / RIR 2")
+    assert len(p.working_sets) == 4
+    for s in p.working_sets:
+        assert s.weight_kg == 0
+        assert s.reps == 12
+    assert "RIR 2" in p.notes
+    assert not any("No sets parsed" in w for w in p.warnings)
+
+
+def test_sets_word_before_x_with_range_and_weight():
+    """Same shape, with a set range and a weight hint: '3-4 sets x 6-8 @ 40kg'."""
+    p = parse_plan("Zercher Squat", "3-4 sets x 6-8 @ 40kg")
+    assert len(p.working_sets) == 4
+    assert all(s.reps == 8 and s.weight_kg == 40 for s in p.working_sets)
+
+
 def test_weight_hint_bare_start():
     """'Start 12.5kg' without 'at' or 'with' — Cillian writes it both ways.
     A dumbbell exercise should still get the doubling."""

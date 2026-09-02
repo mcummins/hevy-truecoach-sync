@@ -91,10 +91,15 @@ _INDIV_SET_RE = re.compile(
 )
 
 # Template-set line prefix:  <sets> × <reps>  with optional "@ kg"
+#   The word "sets" between the count and the "x" is optional, so
+#   "4 sets x 8-12 reps / RIR 2" parses the same as "4 x 8-12". Without
+#   this, that wording fell through to _SETS_NO_REPS_RE and shipped
+#   placeholder sets with blank reps (seen 2026-09-02, Band Assisted Dip).
 _TEMPLATE_SET_RE = re.compile(
     r"""
     ^\s*
     (?P<sets_lo>\d+)(?:\s*-\s*(?P<sets_hi>\d+))?
+    (?:\s*sets?)?
     \s*[x×]\s*
     (?P<reps_lo>\d+)(?:\s*-\s*(?P<reps_hi>\d+))?
     \s*\+?\s*(?:reps?)?
@@ -549,7 +554,9 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
             template_portion = line[:m_tmpl.end()].strip()
             if template_portion:
                 notes_parts.append(template_portion)
-            tail = line[m_tmpl.end():].strip()
+            # Drop a dangling separator ("4 sets x 8-12 reps / RIR 2" gets
+            # split before "RIR", leaving a bare "/" as the tail).
+            tail = line[m_tmpl.end():].strip().lstrip("/|,;-").strip()
             if tail:
                 notes_parts.append(tail)
             continue
