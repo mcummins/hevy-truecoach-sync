@@ -266,6 +266,58 @@ def _is_bodyweight(sets: list) -> bool:
     )
 
 
+def _is_duration_based(sets: list) -> bool:
+    """True if every set is timed rather than counted — a duration with no
+    reps (hollow hold, plank, dead hang, carries logged by time).
+
+    Checked BEFORE _is_bodyweight, because a timed hold has null weight
+    and would otherwise be swallowed by the accumulate path, which sums
+    `reps` and so renders the whole exercise as "0 total" followed by a
+    run of blank lines. That shipped into TrueCoach on 2026-09-14 for a
+    4 x 60s Hollow Hold and reads as "did nothing".
+    """
+    if not sets:
+        return False
+    return all(
+        s.get("duration_seconds") and s.get("reps") is None
+        for s in sets
+    )
+
+
+def _format_duration(seconds) -> str:
+    """Seconds -> TrueCoach's wording: '60 seconds' (and '1 second').
+
+    Matches what Mark already types by hand into the TC results box for
+    timed work, so the round-trip stays visually consistent.
+    """
+    n = int(seconds)
+    return f"{n} second" if n == 1 else f"{n} seconds"
+
+
+def _translate_duration(exercise: dict, sets: list, is_dumbbell: bool) -> "ExerciseBlock":
+    """
+    Timed-hold format — one line per set:
+        60 seconds
+        60 seconds
+
+    A loaded carry/hold keeps its weight prefix ("20kg x 45 seconds"),
+    and per-set RIR is appended when Hevy recorded an RPE, so timed work
+    carries the same coaching context as every other path.
+    """
+    title = exercise.get("title") or "Exercise"
+    lines = []
+    for s in sets:
+        core = _format_duration(s.get("duration_seconds"))
+        weight = s.get("weight_kg")
+        if weight:
+            if is_dumbbell:
+                weight = weight / 2.0
+            core = f"{_format_weight(weight)} x {core}"
+        rir = _format_rir(s.get("rpe"))
+        lines.append(f"{core}, {rir}" if rir else core)
+    return ExerciseBlock(title=title, lines=lines)
+
+
 def _translate_bodyweight_accumulate(exercise: dict, sets: list) -> "ExerciseBlock":
     """
     Special chin-up/push-up format (Mark's 2026-04-21 rule):
@@ -311,6 +363,11 @@ def translate_exercise(
     """
     title = exercise.get("title") or "Exercise"
     sets = exercise.get("sets") or []
+
+    # Timed holds first — they have null weight, so _is_bodyweight would
+    # otherwise claim them and render "0 total".
+    if _is_duration_based(sets):
+        return _translate_duration(exercise, sets, _is_dumbbell(exercise))
 
     if _is_bodyweight(sets):
         return _translate_bodyweight_accumulate(exercise, sets)

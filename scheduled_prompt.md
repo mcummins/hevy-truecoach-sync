@@ -40,10 +40,11 @@ environment, fall back to the legacy Claude-in-Chrome flow (see
 "Fallback: Claude in Chrome" at the end of this file) and say so in the
 Step 6 log line.
 
-> **Check first, don't assume.** Verified 2026-08-31: the scheduled-task
-> environment now ships `mcp__Claude_Browser__*`, and the whole run
-> (Hevy API + TC cookie bootstrap + TC edit-page DOM + Past tab) works
-> on it. That is the primary path again. Between 2026-08-21 and
+> **Check first, don't assume.** Verified 2026-08-31 and again
+> 2026-09-07: the scheduled-task environment ships
+> `mcp__Claude_Browser__*`, and the whole run (Hevy API + TC cookie
+> bootstrap + TC edit-page DOM + Past tab + forward push + routine
+> PUT) works on it. That is the primary path again. Between 2026-08-21 and
 > 2026-08-31 only `mcp__claude-in-chrome__*` was present, so if you find
 > the built-in tools missing, the Chrome fallback is still fully
 > maintained — look at the actual tool list at the start of the run
@@ -56,6 +57,15 @@ Step 6 log line.
 > projections — fetch, and pass the parsed object straight through. That
 > chunking workaround is what produced the guessed-`equipment` bug on
 > 2026-08-24 (see Step 2a).
+>
+> **It does, however, cap on time: ~45 s per `javascript_exec` call.**
+> Size is free, wall-clock is not — the constraint is the opposite of
+> the Chrome fallback's. Anything that polls or sleeps has to be
+> budgeted against that ceiling and split across calls when it doesn't
+> fit (the TC Completed-toggle sweep is the one that bites — see Step 4
+> FORWARD). A call that overruns returns an error, but the DOM work it
+> already did still stands, so treat a timeout as "unknown state, go
+> look", never as "nothing happened".
 
 - **Hevy API**: header `api-key: <HEVY_API_KEY>`. The literal value is
   not stored in this repo — load it at task-dispatch time from the local
@@ -90,25 +100,46 @@ Step 6 log line.
      one — you stay on the login page and would wrongly conclude the
      token was revoked. Hit on 2026-08-31.
 
-     Clear across every plausible scope, then set:
+     **Clear and set in ONE `javascript_exec` call.** Do not split them
+     across two calls. The Ember app is live on the page and rewrites a
+     logged-out `ember_simple_auth-session={"authenticated":{}}` cookie
+     within a second or so of the clear, so a clear-call followed by a
+     separate set-call reliably lands you back at two cookies and the
+     login page — the exact failure the clear was meant to prevent.
+     Hit on 2026-09-07: clear returned `[]`, and by the time the next
+     call ran the empty cookie was back and TC read that one.
+
+     Clear across every plausible scope, then set, in the same script:
 
      ```js
      const names = ['ember_simple_auth-session',
                     'ember_simple_auth-session-expiration_time'];
+     const paths = ['/', '/login', '/client', '/client/workouts', '', '/index.html'];
      for (const n of names)
-       for (const p of ['/', '/login', '/client'])
-         for (const d of ['', '.truecoach.co', 'app.truecoach.co'])
+       for (const p of paths)
+         for (const d of ['', '.truecoach.co', 'app.truecoach.co', '.app.truecoach.co'])
            document.cookie = n + '=; path=' + p + (d ? '; domain=' + d : '') +
                              '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+     const mid = document.cookie.split('; ').filter(x => x.startsWith('ember_simple_auth'));
+     // mid must be [] — if not, widen `paths` further before setting.
+     for (const [k, v] of Object.entries(cookiesFromFile))
+       document.cookie = k + '=' + v + '; path=/; max-age=33177600; secure; samesite=lax';
+     JSON.stringify({ mid, after: document.cookie.split('; ')
+                                    .filter(x => x.startsWith('ember_simple_auth')) });
      ```
 
-     Confirm `document.cookie` has no `ember_simple_auth` entries left
-     before setting the new ones. Then, for each entry in `cookies`, set
-     `document.cookie = '<name>=<value>; path=/; max-age=33177600; secure; samesite=lax'`.
+     Check `mid` is empty in the returned JSON — that's the "no stale
+     cookies left" assertion, made mid-script where it's still true.
      Values are stored in raw URI-encoded `document.cookie` form — set
      them exactly as-is, do not decode or re-encode.
+
+     The wider `paths` list above is what 2026-09-07 needed; the
+     original three-path version left a survivor. Widen, don't narrow.
   3. Navigate to `https://app.truecoach.co/client/workouts` and verify
-     the tab is the Workouts view, not "Login | TrueCoach".
+     the tab is the Workouts view, not "Login | TrueCoach". (Seeing the
+     authenticated cookie listed *twice* afterwards is fine — duplicates
+     of the same authenticated value are harmless. Only a duplicate
+     carrying `{"authenticated":{}}` breaks the session.)
   4. Still on the login page ⇒ the token has been revoked. **Fall back
      to Claude in Chrome for the TrueCoach side** (see the fallback
      section — Mark's real Chrome stays logged in) and carry on with
@@ -535,6 +566,18 @@ the workout as a DOM mismatch and skip it per the guardrails.
 Give the SPA ~3s after `navigate` before querying; it renders empty
 otherwise (and `get_page_text` returns "No text content found").
 
+**Inside `browser_batch` this is not reliable even at 3.5s.** The
+batched `navigate` resolves well before the Ember app boots, so a
+`navigate` + `await sleep(3500)` + query batch can still find **0**
+`li.workoutDisplay-exercise` cards and abort the whole batch (hit
+2026-09-07 on the forward push). Two options, both fine:
+- batch `navigate` → `computer{action:"wait", duration:5}` → query, or
+- run the query as its own call after the navigate.
+
+Either way, **make the query assert its own card count**
+(`if (lis.length !== N) throw`) rather than silently operating on an
+empty list — an empty-list write would look like a clean no-op.
+
 Write `tc_upcoming.json`:
 ```json
 { "workouts": [ {
@@ -664,8 +707,74 @@ only the most recent Hevy workout is considered).
    never "re-asserts" the current state — it always moves you off it.
    Both branches below therefore end with the same loop: **click, re-read
    the class list, repeat until `is-completed`.** Allow up to **4 clicks**
-   (one full cycle plus one), sleeping ~1.5s between clicks so the state
-   settles.
+   (one full cycle plus one).
+
+   **Wait out `is-saving` before you read the class list — a fixed sleep
+   is not enough.** After a click the button carries `is-saving`
+   alongside a *stale* state class, and the settled class can differ from
+   what's on the element mid-flight. Reading during that window makes the
+   loop both over- and under-click. Hit on 2026-09-07 with a flat 1.5s
+   sleep: two rows read `is-saving … is-pending`, got clicked the full 4
+   times, and only landed on `is-completed` by wrapping the cycle; a
+   third row (already-completed, re-touched) read `is-saving
+   is-completed`, so the loop exited immediately and the row settled on
+   `is-missed` — Mark's completed exercise left marked missed, which is
+   exactly the failure this loop exists to prevent.
+
+   Poll instead of sleeping:
+
+   ```js
+   const settle = async (btn) => {
+     for (let k = 0; k < 12; k++) {
+       await new Promise(r => setTimeout(r, 1000));
+       if (!btn.className.includes('is-saving')) break;
+     }
+     return btn.className.trim();
+   };
+   let cls = await settle(btn), clicks = 0;
+   while (!cls.includes('is-completed') && clicks < 4) {
+     btn.click(); clicks++; cls = await settle(btn);
+   }
+   ```
+
+   Call `settle()` **before** the first read too, not just after each
+   click — a row can still be saving from an earlier action. And in the
+   already-completed-and-modified branch, `settle()` after the re-touch
+   click before evaluating the loop condition, or you'll exit on the
+   stale `is-completed` and leave the row on `is-missed`.
+
+   Whatever the loop reports, **re-read every row's class list once more
+   after a few seconds** before saving, and repair any row that isn't
+   `is-completed`. That final sweep is what caught the 2026-09-07 miss.
+   Run the sweep in its **own** call — see the budget note below.
+
+   **Budget the calls: `javascript_exec` is killed at 45 s.** `settle()`
+   polls for up to 12 s per row, so six rows can burn 72 s of polling on
+   their own and a single call that does *set text → toggle → sweep →
+   save* will not fit. Hit 2026-09-09: the sweep-plus-save call timed out
+   at 45 s. The save had actually fired — the tab had redirected to
+   `/client/workouts?_=true` — but the call returned an error instead of
+   its report, so the run was left guessing what state it had produced.
+
+   Split the forward push into three calls:
+
+   1. set the textareas **and** run the per-row toggle loop (returns the
+      per-row report);
+   2. re-read every row's class list and repair any row that isn't
+      `is-completed` — **no save in this call**;
+   3. look the save button up and click it. Keep this one short: don't
+      `await` a long sleep after `save.click()`, just return.
+
+   On a wide workout (8+ exercises) split step 1 as well, three or four
+   cards per call, scoping each call to `lis.slice(a, b)` — and keep the
+   `lis.length !== N` assertion on the full list in every call.
+
+   **A timed-out call is not a failed push.** The DOM work before the
+   cut-off has usually landed. Do not retry it blind and do not re-run
+   the toggle loop — a second pass over rows that already advanced would
+   cycle them straight off `is-completed`. Instead re-read the page
+   (a URL that has left `/edit` means the save went through) and let the
+   mandatory reload verification below decide the outcome.
 
    - **Toggle already completed AND you modified the textarea** → you
      MUST still **re-touch it**. This is not optional — see the
@@ -1006,6 +1115,17 @@ section below.)
 - Never enter the TrueCoach password anywhere. TC auth is either the
   `.tc_session.json` cookie bootstrap or Chrome's existing logged-in
   session; if both are unavailable, abort and report.
+- **A `javascript_exec` call that times out (~45 s) has still done
+  whatever it did before the cut-off.** Don't retry it blind — re-read
+  the page, work out what landed, and continue from there. See the
+  budget note in Step 4 FORWARD for how to split long polling loops.
+- **A `javascript_exec` write can be refused by the permissions
+  classifier.** Seen 2026-09-07: the tombstone PUT was denied once
+  ("Blocked by classifier"), then went through unchanged on a retry.
+  One straightforward retry is reasonable. If it's refused again, do
+  **not** try to disguise the call or route it somewhere else — record
+  the item as `status: "error"` (so `commit()` leaves it uncached and
+  the next run retries) and surface it in the Step 6 log line.
 
 ## Known-good behaviours — do NOT report these as bugs
 
@@ -1020,7 +1140,19 @@ flagging a parser oddity in the Step 6 log.
   the LOW end and working ranges take the HIGH end — also deliberate.
 - **`27 total` on the first line of a bodyweight block.** Chin-ups,
   push-ups and other all-zero-weight exercises use the accumulate
-  format: sum-of-reps, blank line, then the per-set lines.
+  format: sum-of-reps, blank line, then the per-set lines. **Timed holds
+  are NOT this case** — an exercise whose sets are all
+  `duration_seconds` with null reps takes the duration path and renders
+  one `60 seconds` line per set (weight prefix and per-set RIR added when
+  present). A timed hold coming out as `0 total` followed by blank lines
+  means the duration check regressed; that is a bug. Fixed 2026-09-14,
+  locked in by `test_timed_hold_renders_seconds_not_zero_total`.
+- **`3-6 sets of 1-3 reps` → 6 sets × 3 reps.** The word-form connector
+  ("sets of") is a template line like `3-6 x 1-3`, so both ends take the
+  HIGH value. It is not the blank-reps placeholder case. Fixed
+  2026-09-14, locked in by `test_sets_of_reps_wording_takes_high_ends`.
+  The bare `<n> sets` / `<n>-<m> sets x RIR 2` wording still has no rep
+  target and still ships placeholder sets — that one is correct.
 - **`12 . kg` → 12.5kg.** Cillian types the decimal point and drops the
   5. The parser resolves a dangling decimal point to `.5` rather than
   failing the line. Confirmed 2026-08-21.
@@ -1030,6 +1162,14 @@ flagging a parser oddity in the Step 6 log.
   neutrally-named TC exercise to a two-implement Hevy template (e.g.
   "Step Up" → "Dumbbell Step Up"), the override carries
   `"per_hand": true` to keep the round-trip symmetric.
+
+  Confirmed instance (2026-09-07): Hevy `Kettlebell Shoulder Press`
+  12/16/16/20 kg → TC `One Arm Kettlebell Press` 6/8/8/10 kg. The Hevy
+  title contains "Kettlebell", `equipment` was verified absent on every
+  exercise in the response, and the TC plan is per hand — so this
+  halving is correct, not the guessed-`equipment` bug. Note the TC side
+  is the one that names the movement single-arm; **match on the Hevy
+  title, not the TC title.**
 
   **This bullet is not a blanket excuse for halved weights.** It applies
   only when the Hevy exercise title contains "Dumbbell" or "Kettlebell",

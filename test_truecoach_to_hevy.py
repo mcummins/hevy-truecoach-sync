@@ -1144,6 +1144,34 @@ def test_per_hand_false_does_not_double():
 # Runner
 # ---------------------------------------------------------------------------
 
+def test_sets_of_reps_wording_takes_high_ends():
+    """"3-6 sets of 1-3 reps" is a template line, not a bare set count:
+    6 sets (high end) x 3 reps (high end). Regression 2026-09-14 —
+    it used to ship 6 sets with blank reps."""
+    p = parse_plan("Pull-Up", "Bodyweight with pull-up grip\n3-6 sets of 1-3 reps")
+    assert len(p.working_sets) == 6
+    assert {s.reps for s in p.working_sets} == {3}
+
+
+def test_sets_of_reps_single_counts():
+    p = parse_plan("Pull-Up", "4 sets of 8 reps")
+    assert len(p.working_sets) == 4
+    assert {s.reps for s in p.working_sets} == {8}
+
+
+def test_bare_of_without_sets_keyword_is_not_a_template_line():
+    """Guard: the word form requires "sets", so prose can't match."""
+    from truecoach_to_hevy import _TEMPLATE_SET_RE
+    assert _TEMPLATE_SET_RE.match("3 of 5") is None
+
+
+def test_sets_with_no_rep_target_still_placeholders():
+    """The existing _SETS_NO_REPS_RE path must be untouched."""
+    p = parse_plan("Dip", "3-5 sets x RIR 2-3")
+    assert len(p.working_sets) == 5
+    assert all(s.reps is None for s in p.working_sets)
+
+
 if __name__ == "__main__":
     import sys, traceback
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

@@ -95,12 +95,22 @@ _INDIV_SET_RE = re.compile(
 #   "4 sets x 8-12 reps / RIR 2" parses the same as "4 x 8-12". Without
 #   this, that wording fell through to _SETS_NO_REPS_RE and shipped
 #   placeholder sets with blank reps (seen 2026-09-02, Band Assisted Dip).
+#
+#   Cillian also writes the connector out in words — "3-6 sets of 1-3
+#   reps" (Pull-Up, seen 2026-09-14). That has a rep target like any
+#   other template line, but with no "x" it used to fall through to
+#   _SETS_NO_REPS_RE and ship 6 sets with blank reps. The word form is
+#   accepted only WITH the "sets" keyword ("3-6 sets of 1-3"), so a bare
+#   "3 of 5" can't match and start eating prose.
 _TEMPLATE_SET_RE = re.compile(
     r"""
     ^\s*
     (?P<sets_lo>\d+)(?:\s*-\s*(?P<sets_hi>\d+))?
-    (?:\s*sets?)?
-    \s*[x×]\s*
+    (?:
+        (?:\s*sets?)?\s*[x×]\s*      # "4 x 8-12" / "4 sets x 8-12"
+      |
+        \s*sets?\s+of\s+             # "3-6 sets of 1-3"
+    )
     (?P<reps_lo>\d+)(?:\s*-\s*(?P<reps_hi>\d+))?
     \s*\+?\s*(?:reps?)?
     (?:\s*@\s*(?P<weight>""" + _WEIGHT_NUM + r""")\s*kg)?

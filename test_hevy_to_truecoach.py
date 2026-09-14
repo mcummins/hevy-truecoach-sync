@@ -688,6 +688,71 @@ def test_no_markers_no_count_falls_back_to_rpe_heuristic():
     assert out[0]["text"] == "20kg x 10, rir 6\n\n50kg x 10, rir 2"
 
 
+def test_timed_hold_renders_seconds_not_zero_total():
+    """4 x 60s Hollow Hold must not collapse to the '0 total' accumulate
+    block (regression: shipped into TC 2026-09-14)."""
+    workout = {"exercises": [{
+        "title": "Hollow Hold",
+        "sets": [
+            {"type": "normal", "weight_kg": None, "reps": None, "duration_seconds": 60},
+            {"type": "normal", "weight_kg": None, "reps": None, "duration_seconds": 60},
+            {"type": "normal", "weight_kg": None, "reps": None, "duration_seconds": 45},
+        ],
+    }]}
+    out = translate_workout(workout)
+    assert out[0]["text"] == "60 seconds\n60 seconds\n45 seconds"
+    assert "total" not in out[0]["text"]
+
+
+def test_timed_hold_singular_second():
+    workout = {"exercises": [{
+        "title": "Dead Hang",
+        "sets": [{"type": "normal", "weight_kg": None, "reps": None, "duration_seconds": 1}],
+    }]}
+    assert translate_workout(workout)[0]["text"] == "1 second"
+
+
+def test_timed_hold_keeps_weight_and_rir():
+    workout = {"exercises": [{
+        "title": "Weighted Plank",
+        "sets": [{"type": "normal", "weight_kg": 20, "reps": None,
+                  "duration_seconds": 45, "rpe": 8}],
+    }]}
+    assert translate_workout(workout)[0]["text"] == "20kg x 45 seconds, rir 2"
+
+
+def test_timed_hold_dumbbell_halves_weight():
+    workout = {"exercises": [{
+        "title": "Dumbbell Farmer Hold",
+        "sets": [{"type": "normal", "weight_kg": 40, "reps": None, "duration_seconds": 30}],
+    }]}
+    assert translate_workout(workout)[0]["text"] == "20kg x 30 seconds"
+
+
+def test_rep_based_bodyweight_still_uses_accumulate():
+    """The duration check must not steal ordinary bodyweight work."""
+    workout = {"exercises": [{
+        "title": "Push Up",
+        "sets": [
+            {"type": "normal", "weight_kg": 0, "reps": 12},
+            {"type": "normal", "weight_kg": 0, "reps": 15},
+        ],
+    }]}
+    assert translate_workout(workout)[0]["text"].startswith("27 total")
+
+
+def test_mixed_duration_and_reps_falls_through():
+    """Only an all-timed exercise takes the duration path."""
+    workout = {"exercises": [{
+        "title": "Odd",
+        "sets": [
+            {"type": "normal", "weight_kg": 0, "reps": None, "duration_seconds": 30},
+            {"type": "normal", "weight_kg": 0, "reps": 10},
+        ],
+    }]}
+    assert "seconds" not in translate_workout(workout)[0]["text"]
+
+
 if __name__ == "__main__":
     import sys, traceback
     passed = failed = 0
