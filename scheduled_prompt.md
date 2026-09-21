@@ -970,9 +970,17 @@ For each `plan.reverse[i]`:
    `confidence`, `alternatives`, `warnings`, `tc_title`,
    `position_code`). Keep only `exercise_template_id`, `superset_id`,
    `rest_seconds`, `notes`, `sets`. For each exercise: if `notes` is
-   empty, set it to `" "` (PUT rejects empty). Normalise each set to
-   include `distance_meters: null, duration_seconds: null,
-   custom_metric: null`. Do **not** include `folder_id` on PUT.
+   empty, set it to `" "` (PUT rejects empty). Do **not** include
+   `folder_id` on PUT.
+
+   **The sets come out of `build_hevy_exercise` PUT-ready — do not
+   rewrite them.** Every set already carries `distance_meters`,
+   `duration_seconds` and `custom_metric` (null when unused), so there
+   is nothing left to normalise. Older versions of this runbook told you
+   to stamp `duration_seconds: null` onto every set; doing that now
+   **destroys timed work** — a 4 × 60s hollow hold would arrive in Hevy
+   as four empty sets. If you must touch a set dict, only ever add a
+   *missing* key (`setdefault`), never overwrite one.
 
    **Always read `exercise_template_id` from the payload JSON your
    Python generated — never hand-type template IDs.** Save the built
@@ -1147,6 +1155,18 @@ flagging a parser oddity in the Step 6 log.
   present). A timed hold coming out as `0 total` followed by blank lines
   means the duration check regressed; that is a bug. Fixed 2026-09-14,
   locked in by `test_timed_hold_renders_seconds_not_zero_total`.
+- **Timed holds in the REVERSE direction ship `duration_seconds`, not
+  reps.** `4 x 60 seconds` → four sets of `duration_seconds: 60` with
+  `reps: null`. A Hevy routine card showing a hold as **60 reps** is the
+  bug this replaced (hit 2026-09-18, Hollow Hold: `_TEMPLATE_SET_RE`
+  claimed the line before anything looked at the unit word). Both
+  directions now agree on the shape, so a hold round-trips losslessly.
+  Fixed 2026-09-21; locked in by
+  `test_timed_hold_parses_as_duration_not_reps` and
+  `test_timed_hold_round_trips_through_hevy_to_truecoach`. Recognised
+  units: seconds/secs/s and minutes/mins (minutes are converted). A
+  duration mentioned in prose — "rest 90 seconds between sets" — stays
+  in notes and is NOT a set; that is deliberate, not a miss.
 - **`3-6 sets of 1-3 reps` → 6 sets × 3 reps.** The word-form connector
   ("sets of") is a template line like `3-6 x 1-3`, so both ends take the
   HIGH value. It is not the blank-reps placeholder case. Fixed

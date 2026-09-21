@@ -158,6 +158,58 @@ _TOTAL_REPS_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Timed work: holds, planks, dead hangs, carries. Cillian writes these as
+# "4 x 60 seconds" — structurally identical to a "<sets> x <reps>" template
+# line, so _TEMPLATE_SET_RE used to claim it first and ship 4 sets of *60
+# reps* into Hevy (seen 2026-09-18, Hollow Hold). The unit word is the only
+# thing that distinguishes the two, so these patterns must be tried BEFORE
+# _INDIV_SET_RE / _TEMPLATE_SET_RE.
+#
+# This is the mirror of `_is_duration_based` / `_translate_duration` in
+# hevy_to_truecoach.py: a timed set carries `duration_seconds` with null
+# reps in both directions, so a hold now round-trips losslessly.
+_DURATION_UNIT = r"(?P<unit>seconds?|secs?|s|minutes?|mins?)"
+
+# "4 x 60 seconds" / "3 sets x 30-45s" / "4 x 20kg x 45 seconds"
+#   Optional loaded prefix ("20kg x") and optional trailing "@ 10kg" mirror
+#   the weighted-carry shape the forward translator emits.
+_DURATION_TEMPLATE_RE = re.compile(
+    r"""
+    ^\s*
+    (?P<sets_lo>\d+)(?:\s*-\s*(?P<sets_hi>\d+))?
+    (?:\s*sets?)?\s*[x×]\s*
+    (?:(?P<weight>""" + _WEIGHT_NUM + r""")[ \t]*kg\s*[x×]\s*)?
+    (?P<dur_lo>\d+)(?:\s*-\s*(?P<dur_hi>\d+))?
+    \s*""" + _DURATION_UNIT + r"""\b
+    (?:\s*holds?\b)?
+    (?:\s*@\s*(?P<weight2>""" + _WEIGHT_NUM + r""")[ \t]*kg)?
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# A standalone timed set on its own line: "60 seconds", "20kg x 45 seconds",
+# "90s hold". Anchored to END of line as well as start, so prose that merely
+# mentions a duration ("rest 90 seconds between sets", "hold for 60 seconds
+# then switch") stays in notes instead of becoming a set.
+_DURATION_INDIV_RE = re.compile(
+    r"""
+    ^\s*
+    (?:(?P<weight>""" + _WEIGHT_NUM + r""")[ \t]*kg\s*[x×]\s*)?
+    (?P<dur_lo>\d+)(?:\s*-\s*(?P<dur_hi>\d+))?
+    \s*""" + _DURATION_UNIT + r"""\b
+    (?:\s*holds?)?
+    \s*$
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _duration_to_seconds(value: str, unit: str) -> int:
+    """Normalise a matched duration token to whole seconds."""
+    n = int(value)
+    return n * 60 if unit.lower().startswith("m") else n
+
+
 # "3-5 sets x RIR 2-3" / "4 sets, RIR 2" / "3-5 sets" — set count without
 # a numeric rep target. Cillian uses this for bodyweight movements where
 # the rep target is "as many as you can while keeping the RIR". We emit
@@ -210,7 +262,11 @@ _INLINE_BOUNDARY_RE = re.compile(
     r"|each\s+(?:hand|arm|leg|side)\b"
     r"|rir\s+\d"
     r"|bar\s*[x×]"
-    r"|\d+(?:\.\d+)?\s*kg\s*[x×]"
+    # A weight immediately following an "x" is the LOAD half of a loaded
+    # set, not the start of a new line — "4 x 20kg x 45 seconds" is one
+    # prescription. Without the lookbehind the splitter cut it after
+    # "4 x", stranding the set count and shipping a single set.
+    r"|(?<![x×]\s)\d+(?:\.\d+)?\s*kg\s*[x×]"
     r"|\d+(?:\s*-\s*\d+)?\s*[x×]\s*\d"
     # "3-5 sets" / "5 sets" — set count with no rep target
     r"|\d+(?:\s*-\s*\d+)?\s+sets?\b"
@@ -253,6 +309,11 @@ class ParsedSet:
     # a set count without a rep target (e.g. "3-5 sets x RIR 2-3"). Hevy
     # renders these as blank, so Mark fills in the actual reps when logging.
     reps: Optional[int]
+    # Timed work (hold, plank, dead hang, loaded carry). Mutually exclusive
+    # with `reps`: a duration set carries `duration_seconds` and leaves reps
+    # None, which is exactly the shape hevy_to_truecoach._is_duration_based
+    # looks for on the way back out.
+    duration_seconds: Optional[int] = None
 
 
 @dataclass
@@ -413,6 +474,48 @@ def parse_plan(title: str, plan_text: Optional[str]) -> ParsedPlan:
             notes_parts.append(line)
             if section == "pre":
                 section = "working"
+            continue
+
+        # Timed work — MUST be tried before the rep-based set patterns,
+        # which would otherwise read "4 x 60 seconds" as 4 sets of 60 reps.
+        m_dur_tmpl = _DURATION_TEMPLATE_RE.match(line)
+        m_dur_indiv = None if m_dur_tmpl else _DURATION_INDIV_RE.match(line)
+        if m_dur_tmpl or m_dur_indiv:
+            m_dur = m_dur_tmpl or m_dur_indiv
+            # Duration ranges take the HIGH end, matching how working rep
+            # ranges are treated — it's the target, not the floor.
+            secs = _duration_to_seconds(
+                m_dur.group("dur_hi") or m_dur.group("dur_lo"),
+                m_dur.group("unit"),
+            )
+            nsets = (
+                _high_end(m_dur_tmpl.group("sets_lo"), m_dur_tmpl.group("sets_hi"))
+                if m_dur_tmpl else 1
+            )
+            w_raw = m_dur.group("weight")
+            if m_dur_tmpl and not w_raw:
+                w_raw = m_dur_tmpl.group("weight2")
+            if w_raw:
+                weight = _maybe_double(_parse_weight_token(w_raw), title, plan_text)
+            elif pending_weight_hint is not None:
+                weight = pending_weight_hint
+            elif fallback_hint is not None:
+                weight = fallback_hint
+            else:
+                weight = 0.0
+            set_type = "warmup" if section == "warmup" else "normal"
+            if section == "pre":
+                section = "working"
+            target = warmup_sets if set_type == "warmup" else working_sets
+            for _ in range(nsets):
+                target.append(
+                    ParsedSet(set_type, weight, None, duration_seconds=secs)
+                )
+            # Keep the whole line as a note. Unlike the template path we do
+            # NOT split it at the match end — "4 x 60 seconds" reads as one
+            # prescription, and splitting it produced the stray "seconds"
+            # line seen in Hevy notes on 2026-09-18.
+            notes_parts.append(line)
             continue
 
         # Explicit weight hint that is NOT also a set ("Start at 45kg")
@@ -912,15 +1015,30 @@ def _rest_seconds_for(resolved_title: Optional[str]) -> int:
 # `sets` array is empty (returns 200 with the exercise missing from the
 # response), so we always emit at least one set to guarantee the exercise
 # survives. weight_kg/reps are null so it reads as "fill me in" in Hevy.
-_FALLBACK_SET = {"type": "normal", "weight_kg": None, "reps": None}
+_FALLBACK_SET = {
+    "type": "normal", "weight_kg": None, "reps": None,
+    "distance_meters": None, "duration_seconds": None, "custom_metric": None,
+}
 
 
 def _sets_payload_with_fallback(parsed) -> list:
     """Convert ParsedPlan.sets to Hevy-shape dicts, inserting a single
     placeholder set when no sets were parsed. Adds a warning so callers
-    can surface the fallback (see also bidirectional_sync.validate_put_response)."""
+    can surface the fallback (see also bidirectional_sync.validate_put_response).
+
+    Every optional metric key is emitted explicitly (null when unused) so
+    callers can PUT the payload as-is. A timed set carries duration_seconds
+    with reps null; a counted set is the reverse.
+    """
     out = [
-        {"type": s.type, "weight_kg": s.weight_kg, "reps": s.reps}
+        {
+            "type": s.type,
+            "weight_kg": s.weight_kg,
+            "reps": s.reps,
+            "distance_meters": None,
+            "duration_seconds": s.duration_seconds,
+            "custom_metric": None,
+        }
         for s in parsed.sets
     ]
     if not out:

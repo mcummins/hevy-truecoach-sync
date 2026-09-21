@@ -1172,6 +1172,83 @@ def test_sets_with_no_rep_target_still_placeholders():
     assert all(s.reps is None for s in p.working_sets)
 
 
+# ---------------------------------------------------------------------------
+# Plan parser — timed work (holds, planks, hangs, loaded carries)
+#
+# Regression guard for 2026-09-18: "4 x 60 seconds" was claimed by
+# _TEMPLATE_SET_RE and shipped into Hevy as 4 sets of 60 REPS. The unit word
+# is the only signal, so the duration patterns must win over the rep ones.
+# ---------------------------------------------------------------------------
+
+def test_timed_hold_parses_as_duration_not_reps():
+    p = parse_plan("Hollow Hold", "4 x 60 seconds\n8-9/10 difficulty")
+    assert len(p.working_sets) == 4
+    assert all(s.duration_seconds == 60 for s in p.working_sets)
+    assert all(s.reps is None for s in p.working_sets), "60 must not land in reps"
+    assert all(s.weight_kg == 0.0 for s in p.working_sets)
+    # The whole prescription stays on one note line — no stray "seconds".
+    assert "4 x 60 seconds" in p.notes
+    assert "\nseconds" not in p.notes
+
+
+def test_timed_hold_round_trips_through_hevy_to_truecoach():
+    """A hold must survive TC -> Hevy -> TC without turning into reps."""
+    from truecoach_to_hevy import _sets_payload_with_fallback
+    from hevy_to_truecoach import _is_duration_based
+
+    p = parse_plan("Dead Hang", "3 x 60 seconds")
+    sets = _sets_payload_with_fallback(p)
+    assert len(sets) == 3
+    assert all(s["duration_seconds"] == 60 and s["reps"] is None for s in sets)
+    # This is exactly the shape the forward translator looks for.
+    assert _is_duration_based(sets)
+
+
+def test_timed_hold_unit_variants_and_ranges():
+    assert [s.duration_seconds for s in parse_plan("Plank", "3 x 30-45s").sets] == [45, 45, 45]
+    assert [s.duration_seconds for s in parse_plan("Wall Sit", "2 sets x 2 minutes").sets] == [120, 120]
+    assert [s.duration_seconds for s in parse_plan("Plank", "4 x 45 secs").sets] == [45] * 4
+
+
+def test_standalone_duration_line_is_one_set():
+    p = parse_plan("Side Plank", "60 seconds")
+    assert len(p.sets) == 1
+    assert p.sets[0].duration_seconds == 60 and p.sets[0].reps is None
+
+
+def test_loaded_carry_keeps_weight_and_set_count():
+    """The inline splitter used to cut '4 x 20kg x 45 seconds' after '4 x',
+    stranding the set count and shipping a single set."""
+    p = parse_plan("Farmer Carry", "4 x 20kg x 45 seconds")
+    assert len(p.working_sets) == 4
+    assert all(s.weight_kg == 20.0 and s.duration_seconds == 45 for s in p.working_sets)
+
+
+def test_trailing_at_weight_on_timed_set():
+    p = parse_plan("Weighted Plank", "3 x 45 seconds @ 10kg")
+    assert len(p.working_sets) == 3
+    assert all(s.weight_kg == 10.0 and s.duration_seconds == 45 for s in p.working_sets)
+
+
+def test_duration_mentioned_in_prose_is_not_a_set():
+    """Rest intervals and coaching prose must stay in notes."""
+    p = parse_plan("Bench", "4 x 8-12\nRIR 2\nRest 90 seconds between sets")
+    assert len(p.working_sets) == 4
+    assert all(s.reps == 12 and s.duration_seconds is None for s in p.working_sets)
+    assert "Rest 90 seconds between sets" in p.notes
+
+    p2 = parse_plan("Chin-Up", "Hold for 60 seconds then switch sides")
+    assert p2.sets == []
+
+
+def test_rep_based_plans_still_have_null_duration():
+    """No counted set may acquire a duration."""
+    for plan in ("5 x 5 @ 60kg", "4 sets x 8-12 reps / RIR 2",
+                 "3-6 sets of 1-3 reps", "3-5 sets x RIR 2", "112.5 kg x 1+"):
+        p = parse_plan("Squat", plan)
+        assert all(s.duration_seconds is None for s in p.sets), plan
+
+
 if __name__ == "__main__":
     import sys, traceback
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
