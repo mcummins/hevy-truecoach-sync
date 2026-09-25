@@ -437,6 +437,40 @@ def select_active_week(
             "promoted": True, "workouts": next_week}
 
 
+SHIFTED_DAY_MAX_DAYS = 3
+
+
+def _day_name_fallback_slot(hevy_workout: dict, tc_upcoming: dict,
+                            cache: dict,
+                            max_days: int = SHIFTED_DAY_MAX_DAYS) -> dict | None:
+    """Find a TC Upcoming workout for a Hevy workout logged off its TC date.
+
+    Uses the Hevy workout title (a bare day name, since workouts are started
+    from the day-named routines). Returns the closest TC workout with that
+    ``day_name`` within ``max_days`` of the Hevy date that hasn't already
+    been forward-synced, or None.
+    """
+    title = ((hevy_workout.get("raw") or {}).get("title") or "").strip()
+    if title not in DAY_NAMES:
+        return None
+    hd = _parse_iso_date(hevy_workout.get("date"))
+    if hd is None:
+        return None
+    taken = {e.get("tc_workout_id") for e in cache.get("forward", {}).values()
+             if e.get("tc_workout_id")}
+    best, best_gap = None, None
+    for tc in tc_upcoming.get("workouts") or []:
+        if tc.get("day_name") != title or tc.get("tc_id") in taken:
+            continue
+        td = _parse_iso_date(tc.get("date"))
+        if td is None:
+            continue
+        gap = abs((td - hd).days)
+        if gap <= max_days and (best_gap is None or gap < best_gap):
+            best, best_gap = tc, gap
+    return best
+
+
 def plan(
     cache: dict,
     hevy_snapshot: dict,
@@ -459,6 +493,10 @@ def plan(
     forward_items: list[dict] = []
     forward_auto_synced: list[dict] = []
 
+    # TC slots matched by day-name fallback this run (tc_id → tc date), so the
+    # reverse/active-week logic below treats them as done immediately.
+    shifted_matches: dict = {}
+
     workouts = hevy_snapshot.get("workouts") or []
     if workouts:
         w = workouts[0]  # most recent only
@@ -466,6 +504,16 @@ def plan(
         date = w.get("date")
         if wid and wid not in cache["forward"]:
             slots = tc_recent.get("results_by_date", {}).get(date, [])
+            if not slots:
+                # Mark sometimes trains a day early/late. The Hevy workout is
+                # started from the day-named routine, so its title carries the
+                # TC day it belongs to. Match it to the nearest un-synced TC
+                # Upcoming slot with that day_name. (2026-09-25: "Friday"
+                # done on Thu 24 was auto-synced as no_tc_slot_on_date.)
+                alt = _day_name_fallback_slot(w, tc_upcoming, cache)
+                if alt:
+                    slots = [{"tc_id": alt["tc_id"]}]
+                    shifted_matches[alt["tc_id"]] = alt.get("date")
             if not slots:
                 # No TC workout exists on this date — legitimate auto-sync.
                 forward_auto_synced.append({
@@ -503,6 +551,9 @@ def plan(
         e.get("tc_workout_id") for e in cache.get("forward", {}).values()
         if e.get("tc_workout_id")
     }
+    # A workout done off-date but matched by day name completes the TC day.
+    completed_tc_ids |= set(shifted_matches)
+    completed_dates |= {d for d in shifted_matches.values() if d}
     active = select_active_week(
         tc_upcoming, today=today,
         completed_dates=completed_dates,

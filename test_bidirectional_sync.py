@@ -869,3 +869,54 @@ def test_validate_put_response_handles_duplicate_templates():
     # The first occurrence consumed the response slot; second was dropped.
     assert r["dropped"][0]["index"] == 1
     assert r["dropped"][0]["title"] == "Second"
+
+
+def test_plan_forward_day_early_matches_tc_slot_by_day_name():
+    # 2026-09-25 regression: "Friday" logged Thu 24, TC Friday dated 25.
+    cache = _empty()
+    hevy = {"workouts": [{"id": "w1", "date": "2026-09-24",
+                          "raw": {"title": "Friday"}}]}
+    tcu = {"workouts": [
+        {"tc_id": "tcF", "date": "2026-09-25", "day_name": "Friday",
+         "raw_content": {"exercises": []}},
+        {"tc_id": "tcM", "date": "2026-09-28", "day_name": "Monday",
+         "raw_content": {"exercises": []}},
+    ]}
+    p = bs.plan(cache, hevy, tcu, {"results_by_date": {}},
+                today=date(2026, 9, 25))
+    assert p["forward_auto_synced"] == []
+    assert len(p["forward"]) == 1
+    assert p["forward"][0]["tc_slot_id"] == "tcF"
+    # Friday is now handled → active week promotes to next week.
+    assert p["active_week"]["promoted"] is True
+
+
+def test_plan_forward_day_name_fallback_respects_window_and_title():
+    cache = _empty()
+    tcu = {"workouts": [{"tc_id": "tcF", "date": "2026-09-25",
+                         "day_name": "Friday",
+                         "raw_content": {"exercises": []}}]}
+    far = {"workouts": [{"id": "w1", "date": "2026-09-20",
+                         "raw": {"title": "Friday"}}]}
+    p = bs.plan(cache, far, tcu, {"results_by_date": {}},
+                today=date(2026, 9, 20))
+    assert p["forward"] == [] and len(p["forward_auto_synced"]) == 1
+    adhoc = {"workouts": [{"id": "w2", "date": "2026-09-24",
+                           "raw": {"title": "Arm Snack"}}]}
+    p = bs.plan(_empty(), adhoc, tcu, {"results_by_date": {}},
+                today=date(2026, 9, 24))
+    assert p["forward"] == [] and len(p["forward_auto_synced"]) == 1
+
+
+def test_plan_forward_day_name_fallback_skips_already_synced_slot():
+    cache = _empty()
+    cache["forward"] = {"w0": {"synced_at": "t", "tc_workout_id": "tcF",
+                               "mode": "ui"}}
+    hevy = {"workouts": [{"id": "w1", "date": "2026-09-24",
+                          "raw": {"title": "Friday"}}]}
+    tcu = {"workouts": [{"tc_id": "tcF", "date": "2026-09-25",
+                         "day_name": "Friday",
+                         "raw_content": {"exercises": []}}]}
+    p = bs.plan(cache, hevy, tcu, {"results_by_date": {}},
+                today=date(2026, 9, 25))
+    assert p["forward"] == []

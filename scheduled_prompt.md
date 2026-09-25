@@ -496,7 +496,18 @@ You do **not** need to inspect whether the slot already has user-entered
 results. The forward step is append-aware (see below) and skips
 already-Completed exercises, so it's safe to push into a partially-filled
 slot. The planner will only auto-mark "no_tc_slot_on_date" when the
-`results_by_date` array for that date is empty.
+`results_by_date` array for that date is empty **and** no day-name
+fallback matches.
+
+**Off-date workouts (day-name fallback, added 2026-09-25).** Mark sometimes
+trains a day early or late. When there's no TC slot on the Hevy date, the
+planner matches the Hevy workout's **title** (a bare day name, since he
+starts from the day-named routine) to the nearest not-yet-synced TC
+Upcoming workout with that `day_name` within ±3 days, and emits a normal
+`forward` item for it. That TC day then counts as done for active-week
+promotion. So always pass a complete `tc_upcoming.json` when forward
+drills — the fallback reads it. (Hit 2026-09-25: "Friday" logged Thu 24
+was wrongly auto-synced because TC's Friday was dated the 25th.)
 
 **Completed-day tombstoning.** When a Hevy workout's date matches an
 active-week TC day, the planner treats that day as "done" — it skips
