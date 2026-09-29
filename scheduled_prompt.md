@@ -30,7 +30,7 @@ Files in `$AUTO_DIR`:
 
 All Python modules are mutually importable from `$AUTO_DIR`.
 
-Scratch snapshots for this run go in a throwaway dir — `/tmp/sync-run-<iso>/`.
+Scratch snapshots for this run go in a throwaway dir — `/tmp/sync-run-<iso>/` (referred to as `$RUN`).
 
 ## Access
 
@@ -67,20 +67,44 @@ Step 6 log line.
 > already did still stands, so treat a timeout as "unknown state, go
 > look", never as "nothing happened".
 
-- **Hevy API**: header `api-key: <HEVY_API_KEY>`. The literal value is
-  not stored in this repo — load it at task-dispatch time from the local
-  `.env` file (`HEVY_API_KEY=...`, gitignored). Sandbox networking is
-  blocked, so calls go through the browser: navigate a tab to
-  `https://api.hevyapp.com/` (any path — it just establishes the
-  origin), then run same-origin fetches with `javascript_tool`. The
-  built-in browser's `javascript_exec` awaits promises, so return the
-  fetch directly — no `document.write` tricks needed:
+- **Hevy API — use `hevy_api.py`, never the browser (changed 2026-09-29).**
+  All Hevy calls go through `$AUTO_DIR/hevy_api.py`, run with
+  `device_bash` on Mark's computer (its egress allowlist includes
+  `api.hevyapp.com` as of 2026-09-29). The script reads `HEVY_API_KEY`
+  from `.env` **itself** — the key never enters your context, a tool
+  argument, or the browser.
 
-  ```js
-  fetch('https://api.hevyapp.com/v1/workouts?page=1&pageSize=1',
-        { headers: { 'api-key': '<HEVY_API_KEY>' } }).then(r => r.text())
+  ```bash
+  python3 hevy_api.py check                                   # {"status":200}
+  python3 hevy_api.py get  '/v1/workouts?page=1&pageSize=1'   # {"status":..,"body":{..}}
+  python3 hevy_api.py get  '/v1/workouts?page=1&pageSize=10' --out $RUN/hevy_workouts.json
+  python3 hevy_api.py folder --out $RUN/hevy_folder.json      # Mark folder -> {"routines":[{id,title}]}
+  python3 hevy_api.py put  /v1/routines/<id> --body $RUN/put_body_<day>.json --out $RUN/put_response_<day>.json
+  python3 hevy_api.py post /v1/routines      --body $RUN/post_body_<day>.json --out $RUN/put_response_<day>.json
   ```
-  JSON-parse the returned string.
+  `--body` is a file holding the full request JSON (e.g.
+  `{"routine": {...}}`). `--out` writes Hevy's raw response body (no
+  wrapper) — feed it straight to `validate-put --response`, and the
+  `folder` output is already `hevy_folder.json`. stdout then carries
+  only `{"status", "out"}`. Exit 0 on 2xx, 1 otherwise. Prefer `--out`
+  and process the file with Python rather than echoing large bodies.
+
+  **Step 2a gets simpler too:** build `hevy_snapshot.json` in Python
+  straight from the `--out` file of the pageSize=10 GET, with each
+  `raw` being the untouched API object. No projection, no chunked
+  read-back, no hand-rebuilding — which removes the guessed-`equipment`
+  failure mode entirely.
+
+  > **NEVER read, print, grep, `cat` or `cut` `.env`, and never put the
+  > key (or any token) into a command, a `javascript_exec`, a URL or a
+  > log line.** Doing that is what got the run blocked by the
+  > permissions classifier ("Credential Materialization") on 2026-09-07
+  > and 2026-09-29 — and on 09-29 it also leaked the key into the
+  > transcript. If `hevy_api.py check` returns 401, log
+  > `sync: aborted — Hevy 401 (rotate key in .env)` and stop; do not go
+  > looking at the key. If it fails with a network/DNS error, log
+  > `sync: aborted — api.hevyapp.com unreachable from device_bash
+  > (egress allowlist?)` and stop; do **not** fall back to the browser.
 
 - **TrueCoach**: browser-only, `https://app.truecoach.co/`. The built-in
   browser starts logged out; bootstrap the session from
@@ -155,6 +179,16 @@ Step 6 log line.
      `.tc_session.json` (keeps the stored copy fresh if TC ever
      rotates tokens).
 
+  **Try without the bootstrap first.** The built-in browser keeps a
+  persistent profile, so it is usually still logged in from the last
+  run. Navigate to `https://app.truecoach.co/client/workouts` first; if
+  it shows the Workouts view, skip steps 1–2 and 5 entirely. Only run
+  the cookie bootstrap when you actually land on the login page — it
+  copies a session token into a `javascript_exec`, which the
+  permissions classifier may refuse. If it is refused, do not retry or
+  rephrase it: use the Chrome fallback for TC, and say in the Step 6 log
+  line that the TC bootstrap was blocked.
+
   Upcoming list: `https://app.truecoach.co/client/workouts`. Dismiss
   the OneTrust cookie banner with "Reject All" if it appears.
 
@@ -213,7 +247,7 @@ Exit 0 ⇒ proceed.
 
 ### 1a. Hevy newest workout
 
-One GET via the browser: `/v1/workouts?page=1&pageSize=1`. Read the response id.
+`python3 hevy_api.py get '/v1/workouts?page=1&pageSize=1'` — read `body.workouts[0].id`.
 
 - If it matches `cache.stage1.last_hevy_workout_id` **and** that id is already
   in `cache.forward` → forward is done for this run. Skip forward drill.
@@ -226,9 +260,10 @@ Two cheap calls:
 **TC**: navigate to `https://app.truecoach.co/client/workouts` (Upcoming
 tab). Extract `(tc_id, date, day_name)` for every upcoming workout.
 
-**Hevy folder**: GET `https://api.hevyapp.com/v1/routines?page=1&pageSize=10`
-via the browser (paginate up to `page_count`). Filter to `folder_id == 2355979`
-and capture `[{id, title}, ...]`. This is the current Mark folder state.
+**Hevy folder**: `python3 hevy_api.py folder --out $RUN/hevy_folder.json`
+(paginates and filters to `folder_id == 2355979` for you). The file is
+already the `hevy_folder.json` shape Step 2b needs. This is
+the current Mark folder state.
 
 Fingerprint the TC list:
 ```
@@ -1006,13 +1041,13 @@ For each `plan.reverse[i]`:
    the API call.
 
 5. **PUT or POST** depending on `existing_routine_id`:
-   - **`existing_routine_id` set**: `PUT https://api.hevyapp.com/v1/routines/<id>`
+   - **`existing_routine_id` set**: `python3 hevy_api.py put /v1/routines/<id> --body … --out …`
      with `{ "routine": body }`. On 200, record
      `{ day_name, status: "ok", tc_content_hash, payload_hash,
         routine_id: <existing_routine_id> }`. (Echo `routine_id` even on
      PUT — when the planner repurposed a slot, `commit()` needs it to
      update `cache.day_routines[day_name]` to the reused id.)
-   - **`existing_routine_id` is null**: `POST https://api.hevyapp.com/v1/routines`
+   - **`existing_routine_id` is null**: `python3 hevy_api.py post /v1/routines --body … --out …`
      with `{ "routine": { ...body, "folder_id": 2355979 } }`. The Hevy
      API **requires** `folder_id` on POST (PUT does not). On 201/200,
      parse the response — the new routine's id is at
@@ -1056,7 +1091,7 @@ them in the Hevy UI when convenient).
 
 For each `plan.reverse_tombstones[i]`:
 
-1. `PUT https://api.hevyapp.com/v1/routines/<routine_id>` with this body:
+1. `python3 hevy_api.py put /v1/routines/<routine_id> --body <file>` with this body:
    ```json
    {
      "routine": {
@@ -1220,7 +1255,11 @@ This was the primary path before 2026-07-17 and again from 2026-08-21
 to 2026-08-31; it rides Mark's real Chrome, where he stays logged into
 TrueCoach — no `.tc_session.json` bootstrap is needed (and Chrome's own
 TC session is untouched by the cookie-file flow). Partial fallback is
-fine: TC via Chrome while Hevy API calls stay in the built-in browser.
+fine: TC via Chrome.
+
+> **As of 2026-09-29 Hevy never goes through Chrome or the built-in
+> browser — always `hevy_api.py` (see Access). The Hevy-in-Chrome notes
+> below are historical; do not use them.**
 
 - **Hevy API**: look for an existing Chrome tab at
   `https://api.hevyapp.com/`; create one if missing. **`javascript_tool`
